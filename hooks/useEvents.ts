@@ -44,13 +44,14 @@ export function useEvents(filters: EventFilters = {}) {
         query = query.ilike('title', `%${filters.search}%`);
       }
 
-      if (filters.timeRange && filters.timeRange !== 'all') {
+      if (filters.timeRange === 'today' || filters.timeRange === 'week') {
         const { from, to } = getTimeFilter(filters.timeRange);
         query = query.gte('start_time', from);
         if (to) {
           query = query.lte('start_time', to);
         }
-      } else {
+      } else if (filters.timeRange !== 'all') {
+        // Default: show only future events
         query = query.gte('start_time', new Date().toISOString());
       }
 

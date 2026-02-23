@@ -21,7 +21,7 @@ export function useOrgFollows() {
   });
 }
 
-export function useIsFollowingOrg(orgId: string) {
+export function useIsFollowingOrg(orgId: string | undefined) {
   const { user } = useAuth();
 
   return useQuery({
@@ -31,7 +31,7 @@ export function useIsFollowingOrg(orgId: string) {
         .from('org_follows')
         .select('org_id')
         .eq('user_id', user!.id)
-        .eq('org_id', orgId)
+        .eq('org_id', orgId!)
         .maybeSingle();
 
       if (error) throw error;
@@ -47,6 +47,7 @@ export function useToggleOrgFollow() {
 
   return useMutation({
     mutationFn: async ({ orgId, isFollowing }: { orgId: string; isFollowing: boolean }) => {
+      if (!user) throw new Error('Must be logged in');
       if (isFollowing) {
         const { error } = await supabase
           .from('org_follows')

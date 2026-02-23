@@ -1,20 +1,45 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Animated, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { EventType } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import Button from '@/components/Button';
 
-const INTEREST_OPTIONS: { label: string; value: EventType }[] = [
-  { label: 'Academic', value: 'academic' },
-  { label: 'Sports', value: 'sports' },
-  { label: 'Social', value: 'social' },
-  { label: 'Career', value: 'career' },
-  { label: 'Club', value: 'club' },
-  { label: 'Greek Life', value: 'greek' },
-  { label: 'Other', value: 'other' },
+const INTEREST_OPTIONS: { label: string; value: EventType; color: string; icon: string }[] = [
+  { label: 'Academic', value: 'academic', color: Colors.primary, icon: '📚' },
+  { label: 'Sports', value: 'sports', color: Colors.error, icon: '🏀' },
+  { label: 'Social', value: 'social', color: Colors.secondary, icon: '🎉' },
+  { label: 'Career', value: 'career', color: Colors.success, icon: '💼' },
+  { label: 'Club', value: 'club', color: Colors.warning, icon: '🎨' },
+  { label: 'Greek Life', value: 'greek', color: Colors.primaryDark, icon: '🏛️' },
+  { label: 'Other', value: 'other', color: Colors.textMuted, icon: '✨' },
 ];
+
+function InterestTile({ option, selected, onPress }: any) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, { toValue: 0.9, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+  };
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} style={styles.tileWrapper}>
+      <Animated.View style={[
+        styles.tile,
+        selected ? { backgroundColor: option.color, borderColor: option.color } : { borderColor: Colors.border },
+        { transform: [{ scale }] }
+      ]}>
+        <Text style={styles.tileIcon}>{option.icon}</Text>
+        <Text style={[styles.tileText, selected && styles.tileTextSelected]}>{option.label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function Interests() {
   const router = useRouter();
@@ -29,46 +54,48 @@ export default function Interests() {
 
   const handleContinue = async () => {
     if (user && selected.length > 0) {
-      await supabase
-        .from('profiles')
-        .update({ preferences: { interests: selected } })
-        .eq('id', user.id);
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('preferences')
+          .eq('id', user.id)
+          .single();
+
+        const existing = (profile?.preferences as Record<string, unknown>) ?? {};
+        await supabase
+          .from('profiles')
+          .update({ preferences: { ...existing, interests: selected } })
+          .eq('id', user.id);
+      } catch {
+      }
     }
     router.push('/(onboard)/notifications');
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>What are you into?</Text>
         <Text style={styles.subtitle}>Select your interests to personalize your feed.</Text>
 
         <View style={styles.grid}>
           {INTEREST_OPTIONS.map((option) => (
-            <TouchableOpacity
+            <InterestTile
               key={option.value}
-              style={[styles.chip, selected.includes(option.value) && styles.chipSelected]}
+              option={option}
+              selected={selected.includes(option.value)}
               onPress={() => toggle(option.value)}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  selected.includes(option.value) && styles.chipTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
       </ScrollView>
 
       <View style={styles.bottom}>
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <Text style={styles.buttonText}>
-            {selected.length > 0 ? 'Continue' : 'Skip'}
-          </Text>
-        </TouchableOpacity>
+        <Button
+          title={selected.length > 0 ? "Continue" : "Skip for now"}
+          onPress={handleContinue}
+          variant={selected.length > 0 ? "primary" : "secondary"}
+        />
       </View>
     </View>
   );
@@ -82,54 +109,55 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   title: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.fontSize.xxl,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.sm,
   },
   subtitle: {
-    fontSize: Typography.fontSize.md,
+    fontSize: Typography.fontSize.lg,
     color: Colors.textMuted,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xxl,
+    lineHeight: 24,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
+    justifyContent: 'space-between',
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+  tileWrapper: {
+    width: '47%',
   },
-  chipSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  tile: {
+    borderWidth: 2,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    ...Shadows.sm,
   },
-  chipText: {
-    fontSize: Typography.fontSize.sm,
+  tileIcon: {
+    fontSize: 32,
+    marginBottom: Spacing.sm,
+  },
+  tileText: {
+    fontSize: Typography.fontSize.md,
+    fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    fontWeight: Typography.fontWeight.medium,
+    textAlign: 'center',
   },
-  chipTextSelected: {
+  tileTextSelected: {
     color: Colors.white,
   },
   bottom: {
     padding: Spacing.xl,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.sm,
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
+    paddingBottom: Spacing.xxxl,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
 });

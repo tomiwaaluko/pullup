@@ -33,21 +33,31 @@ export default function RegisterOrg() {
   const [contactEmail, setContactEmail] = useState('');
 
   const handleSubmit = async () => {
-    if (!name || !description || !contactEmail) {
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+    const trimmedEmail = contactEmail.trim();
+
+    if (!trimmedName || !trimmedDescription || !trimmedEmail) {
       Alert.alert('Error', 'Please fill in all required fields.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
 
     try {
       await createOrg.mutateAsync({
-        name,
-        description,
+        name: trimmedName,
+        description: trimmedDescription,
         category,
-        contact_email: contactEmail,
+        contact_email: trimmedEmail,
       });
       router.replace('/org/success');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to register organization.');
+      Alert.alert('Error', err?.message || 'Failed to register organization.');
     }
   };
 

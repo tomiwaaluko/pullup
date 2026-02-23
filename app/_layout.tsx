@@ -2,13 +2,11 @@ import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react-native';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  enabled: process.env.NODE_ENV === 'production',
-});
+// TODO: Add Sentry when ready and uncomment:
+// import * as Sentry from '@sentry/react-native';
+// Sentry.init({ dsn: process.env.SENTRY_DSN, enabled: process.env.NODE_ENV === 'production' });
 
 const queryClient = new QueryClient({
   defaultOptions: {

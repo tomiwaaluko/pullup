@@ -53,6 +53,10 @@ pullup/
 └── __tests__/
 ```
 
+## Accessibility
+
+All screens should have proper `accessibilityLabel` props on interactive elements (buttons, inputs, links, etc.). Use `accessibilityRole` and `accessibilityHint` where appropriate to ensure screen reader compatibility. Test with VoiceOver (iOS) and TalkBack (Android) during development.
+
 ## Related Docs
 
 - [roadmap.md](../../roadmap.md) — Phased feature roadmap (Phases 2–5)

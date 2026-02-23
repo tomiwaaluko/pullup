@@ -45,6 +45,13 @@ Use before or in parallel with implementation.
 - RSVP flow
 - Create event (org)
 
+### Accessibility Testing
+
+- Verify all interactive elements have `accessibilityLabel` props
+- Test screen reader navigation with VoiceOver (iOS) and TalkBack (Android)
+- Check color contrast ratios meet WCAG AA standards
+- Ensure touch targets are at least 44x44 points
+
 ### Coverage
 
 - Core flows covered

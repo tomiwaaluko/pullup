@@ -48,25 +48,40 @@ export default function CreateEvent() {
       return;
     }
 
-    const startDateTime = new Date(`${startDate}T${startTime}`).toISOString();
-    const endDateTime = new Date(`${endDate}T${endTime}`).toISOString();
+    const parsedCapacity = capacity ? parseInt(capacity, 10) : undefined;
+    if (parsedCapacity !== undefined && (isNaN(parsedCapacity) || parsedCapacity <= 0)) {
+      Alert.alert('Error', 'Capacity must be a positive number.');
+      return;
+    }
+
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(`${endDate}T${endTime}`);
+
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      Alert.alert('Error', 'Please enter valid dates and times.');
+      return;
+    }
+    if (endDateTime <= startDateTime) {
+      Alert.alert('Error', 'End date/time must be after start date/time.');
+      return;
+    }
 
     try {
       await createEvent.mutateAsync({
         title,
         description,
-        start_time: startDateTime,
-        end_time: endDateTime,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
         location,
         type,
         org_id: currentOrg.id,
         status,
-        capacity: capacity ? parseInt(capacity, 10) : undefined,
+        capacity: parsedCapacity,
       });
       Alert.alert('Success', `Event ${status === 'published' ? 'published' : 'saved as draft'}.`);
       router.back();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert('Error', err?.message || 'Failed to create event.');
     }
   };
 

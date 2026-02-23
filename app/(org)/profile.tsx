@@ -62,7 +62,7 @@ export default function OrgProfile() {
       setCurrentOrg(updated);
       Alert.alert('Success', 'Organization profile updated.');
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert('Error', err?.message || 'Failed to update organization.');
     }
   };
 

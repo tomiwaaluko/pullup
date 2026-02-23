@@ -1,6 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Typography, Spacing } from '@/constants/theme';
+import Button from '@/components/Button';
 
 export default function Welcome() {
   const router = useRouter();
@@ -8,19 +9,20 @@ export default function Welcome() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to PullUp</Text>
+        <View style={styles.graphicPlaceholder}>
+          <Text style={styles.graphicText}>🎉</Text>
+        </View>
+        <Text style={styles.title}>Welcome to PullUp!</Text>
         <Text style={styles.description}>
-          Discover what's happening on campus. Find events, RSVP, and never miss out.
+          Discover what's happening on campus. Find events, RSVP, and never miss out on the fun.
         </Text>
       </View>
 
       <View style={styles.bottom}>
-        <TouchableOpacity
-          style={styles.button}
+        <Button
+          title="Let's Go!"
           onPress={() => router.push('/(onboard)/interests')}
-        >
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );
@@ -32,37 +34,41 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
-    paddingTop: 120,
-    paddingBottom: Spacing.xxl,
+    paddingTop: 100,
+    paddingBottom: Spacing.xxxl,
   },
   content: {
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  graphicPlaceholder: {
+    width: 120,
+    height: 120,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xxl,
+  },
+  graphicText: {
+    fontSize: 60,
   },
   title: {
     fontSize: Typography.fontSize.xxl,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.primary,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   description: {
     fontSize: Typography.fontSize.lg,
     color: Colors.textMuted,
     textAlign: 'center',
     lineHeight: 28,
+    paddingHorizontal: Spacing.md,
   },
   bottom: {
     paddingBottom: Spacing.xl,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.sm,
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
   },
 });

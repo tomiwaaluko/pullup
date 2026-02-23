@@ -16,12 +16,12 @@ export default function AddToCalendar({ event }: AddToCalendarProps) {
     endTime: event.end_time,
   };
 
-  const handleAdd = (provider: 'google' | 'outlook') => {
+  const handleAdd = async (provider: 'google' | 'outlook') => {
     try {
       if (provider === 'google') {
-        addToGoogleCalendar(calendarEvent);
+        await addToGoogleCalendar(calendarEvent);
       } else {
-        addToOutlookCalendar(calendarEvent);
+        await addToOutlookCalendar(calendarEvent);
       }
     } catch {
       Alert.alert('Error', 'Could not open calendar.');

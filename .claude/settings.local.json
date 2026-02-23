@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(npx jest --passWithNoTests)"
+      "Bash(npx jest --passWithNoTests)",
+      "Bash(npx expo start:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(netstat:*)",
+      "Bash(npx jest:*)"
     ]
   }
 }

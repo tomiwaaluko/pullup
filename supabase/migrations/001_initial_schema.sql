@@ -106,7 +106,7 @@ BEGIN
   INSERT INTO profiles (id, email, name)
   VALUES (
     NEW.id,
-    NEW.email,
+    COALESCE(NEW.email, ''),
     COALESCE(NEW.raw_user_meta_data->>'name', '')
   );
   RETURN NEW;
@@ -156,7 +156,7 @@ CREATE POLICY "Organizations are publicly readable"
 
 CREATE POLICY "Authenticated users can create organizations"
   ON organizations FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+  WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = created_by);
 
 CREATE POLICY "Org creators can update their organizations"
   ON organizations FOR UPDATE
@@ -173,7 +173,7 @@ CREATE POLICY "Published events are publicly readable"
 
 CREATE POLICY "Authenticated users can create events"
   ON events FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+  WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = created_by);
 
 CREATE POLICY "Event creators can update their events"
   ON events FOR UPDATE

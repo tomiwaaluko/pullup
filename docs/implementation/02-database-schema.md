@@ -75,19 +75,28 @@ Create migrations in `supabase/migrations/`:
 ### Organizations
 
 - Select: all (public)
-- Insert: authenticated
+- Insert: authenticated, enforce `auth.uid() = created_by` to prevent users from inserting rows with another user's ID
 - Update/delete: created_by = auth.uid()
 
 ### Events
 
 - Select: status = 'published' OR created_by = auth.uid()
-- Insert: authenticated
+- Insert: authenticated, enforce `auth.uid() = created_by` to prevent users from inserting rows with another user's ID
 - Update/delete: created_by = auth.uid() OR org admin
 
 ### RSVPs, Saved Events, Org Follows
 
 - Select: own rows (user_id = auth.uid())
 - Insert/delete: user_id = auth.uid()
+
+## Indexes
+
+Add composite indexes for common query patterns:
+
+- `events(org_id, start_time)` — org event listings sorted by date
+- `events(status, start_time)` — published event feeds
+- `rsvps(event_id, user_id)` — RSVP lookups per event
+- `org_follows(user_id, org_id)` — followed orgs per user
 
 ## Triggers
 

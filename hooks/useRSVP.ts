@@ -48,6 +48,7 @@ export function useToggleRSVP() {
 
   return useMutation({
     mutationFn: async ({ eventId, isRSVPd }: { eventId: string; isRSVPd: boolean }) => {
+      if (!user) throw new Error('Must be logged in');
       if (isRSVPd) {
         const { error } = await supabase
           .from('rsvps')

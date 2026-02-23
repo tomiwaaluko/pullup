@@ -10,7 +10,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,6 +35,16 @@ export default function ProfileScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: Colors.text, fontSize: Typography.fontSize.md }}>
+          Failed to load profile.
+        </Text>
       </View>
     );
   }
@@ -135,7 +145,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    backgroundColor: Colors.primaryLight + '20',
+    backgroundColor: `${Colors.primaryLight}20`,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,

@@ -50,17 +50,20 @@ export function useCreateOrganization() {
       category: string;
       contact_email: string;
     }) => {
+      if (!user) throw new Error('Must be logged in');
+
       const slug = org.name
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-');
+        .replace(/\s+/g, '-')
+        .replace(/^-+|-+$/g, '') || `org-${Date.now()}`;
 
       const { data, error } = await supabase
         .from('organizations')
         .insert({
           ...org,
           slug,
-          created_by: user!.id,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -129,9 +132,10 @@ export function useCreateEvent() {
       status: string;
       capacity?: number;
     }) => {
+      if (!user) throw new Error('Must be logged in');
       const { data, error } = await supabase
         .from('events')
-        .insert({ ...event, created_by: user!.id })
+        .insert({ ...event, created_by: user.id })
         .select()
         .single();
 

@@ -12,10 +12,12 @@ Org onboarding and org dashboard.
 
 ### Org Details Form
 
-- Organization name (required)
+- Organization name (required) — trim whitespace before submission
 - Description (required)
 - Category (dropdown: Academic, Sports, Social, Club, Career, Greek, Other)
-- Contact email (required)
+- Contact email (required) — validate email format before submission
+
+**Slug generation:** The slug is auto-generated from the org name. Handle edge cases: strip leading/trailing whitespace, replace special characters, collapse consecutive hyphens, and reject empty or malformed slugs (e.g., a name that is only whitespace or symbols). If the generated slug collides with an existing one, append a short numeric suffix.
 
 Verification: open registration for MVP. Add admin approval in Phase 2 if needed.
 

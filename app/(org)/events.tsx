@@ -33,7 +33,11 @@ function OrgEventCard({ event }: { event: Event }) {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => deleteEvent.mutate({ id: event.id, orgId: event.org_id }),
+        onPress: () =>
+          deleteEvent.mutate(
+            { id: event.id, orgId: event.org_id },
+            { onError: () => Alert.alert('Error', 'Failed to delete event.') },
+          ),
       },
     ]);
   };
@@ -53,7 +57,7 @@ function OrgEventCard({ event }: { event: Event }) {
       });
       Alert.alert('Success', 'Event duplicated as draft.');
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert('Error', err?.message || 'Failed to duplicate event.');
     }
   };
 
@@ -179,10 +183,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   publishedBadge: {
-    backgroundColor: Colors.success + '20',
+    backgroundColor: `${Colors.success}20`,
   },
   draftBadge: {
-    backgroundColor: Colors.warning + '20',
+    backgroundColor: `${Colors.warning}20`,
   },
   statusText: {
     fontSize: Typography.fontSize.xs,

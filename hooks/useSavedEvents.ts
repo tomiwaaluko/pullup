@@ -47,6 +47,7 @@ export function useToggleSavedEvent() {
 
   return useMutation({
     mutationFn: async ({ eventId, isSaved }: { eventId: string; isSaved: boolean }) => {
+      if (!user) throw new Error('Must be logged in');
       if (isSaved) {
         const { error } = await supabase
           .from('saved_events')

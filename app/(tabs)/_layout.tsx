@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Colors } from '@/constants/theme';
+import { Colors, Shadows, Radius } from '@/constants/theme';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -7,7 +8,23 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
-        headerShown: true,
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: Platform.OS === 'ios' ? 24 : 16,
+          left: 20,
+          right: 20,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          borderRadius: Radius.full,
+          height: 64,
+          paddingBottom: Platform.OS === 'ios' ? 0 : 0,
+          ...Shadows.floating,
+          borderTopWidth: 0,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 10,
+        },
       }}
     >
       <Tabs.Screen
@@ -20,8 +37,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="rsvps"
         options={{
-          title: 'My RSVPs',
-          tabBarLabel: 'My RSVPs',
+          title: 'RSVPs',
+          tabBarLabel: 'RSVPs',
         }}
       />
       <Tabs.Screen

@@ -17,13 +17,15 @@ describe('generateICS', () => {
     expect(ics).toContain('END:VEVENT');
     expect(ics).toContain('SUMMARY:CS Club Meeting');
     expect(ics).toContain('DESCRIPTION:Weekly club meeting');
-    expect(ics).toContain('LOCATION:Student Union, Room 201');
+    expect(ics).toContain('LOCATION:Student Union\\, Room 201');
   });
 
-  it('contains DTSTART and DTEND', () => {
+  it('contains DTSTART, DTEND, UID, and DTSTAMP', () => {
     const ics = generateICS(mockEvent);
     expect(ics).toMatch(/DTSTART:\d{8}T\d{6}Z/);
     expect(ics).toMatch(/DTEND:\d{8}T\d{6}Z/);
+    expect(ics).toMatch(/UID:.+@pullup/);
+    expect(ics).toMatch(/DTSTAMP:\d{8}T\d{6}Z/);
   });
 });
 

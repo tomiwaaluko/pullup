@@ -1,5 +1,6 @@
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, ViewStyle } from 'react-native';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import React, { useRef } from 'react';
+import { Pressable, Text, ActivityIndicator, StyleSheet, ViewStyle, Animated } from 'react-native';
+import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -19,65 +20,92 @@ export default function Button({
   style,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 10,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.base,
-        variant === 'primary' && styles.primary,
-        variant === 'secondary' && styles.secondary,
-        variant === 'ghost' && styles.ghost,
-        isDisabled && styles.disabled,
-        style,
-      ]}
+    <Pressable
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
-      activeOpacity={0.7}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' ? Colors.white : Colors.primary}
-        />
-      ) : (
-        <Text
-          style={[
-            styles.text,
-            variant === 'primary' && styles.primaryText,
-            variant === 'secondary' && styles.secondaryText,
-            variant === 'ghost' && styles.ghostText,
-          ]}
-        >
-          {title}
-        </Text>
-      )}
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.base,
+          variant === 'primary' && styles.primary,
+          variant === 'secondary' && styles.secondary,
+          variant === 'ghost' && styles.ghost,
+          isDisabled && styles.disabled,
+          style,
+          { transform: [{ scale }] }
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator
+            color={variant === 'primary' ? Colors.white : Colors.primary}
+          />
+        ) : (
+          <Text
+            style={[
+              styles.text,
+              variant === 'primary' && styles.primaryText,
+              variant === 'secondary' && styles.secondaryText,
+              variant === 'ghost' && styles.ghostText,
+            ]}
+          >
+            {title}
+          </Text>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: Radius.sm,
-    padding: Spacing.lg,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 56,
   },
   primary: {
     backgroundColor: Colors.primary,
+    ...Shadows.md,
   },
   secondary: {
     backgroundColor: Colors.surface,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   disabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   text: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
   },
   primaryText: {
     color: Colors.white,

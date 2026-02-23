@@ -34,6 +34,7 @@ Supabase Auth setup. Any email allowed (no .edu restriction).
 
 - Use Supabase `onAuthStateChange` to sync session
 - Store session in context or state
+- Handle `getSession()` errors gracefully — the promise can reject (e.g., network failure), which would leave `loading` stuck at `true`. Wrap in try/catch and set `loading = false` in the error path so the app does not hang on the splash/loading screen.
 - Redirect logic in root layout:
   - No session + not on auth route → redirect to sign-in
   - Session + on auth route → redirect to app (tabs or onboarding)
@@ -43,6 +44,11 @@ Supabase Auth setup. Any email allowed (no .edu restriction).
 - `(tabs)/`, `(org)/`, `events/[id]` require auth (or allow read for events)
 - Events: public read for published events; RSVP requires auth
 - Org dashboard: require auth + org membership/ownership
+
+## Email Confirmation Flow
+
+- When using email/password sign-up, Supabase sends a confirmation email by default. Handle the unconfirmed state in the UI — show a message like "Check your email to confirm your account" and provide a "Resend confirmation" option.
+- For magic link sign-in, the link itself serves as confirmation. Ensure deep link handling is configured so the app receives the callback URL correctly.
 
 ## Profile Creation
 

@@ -8,8 +8,13 @@ interface CalendarEvent {
   endTime: string;
 }
 
+function escapeICSText(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
 function formatDateForICS(dateStr: string): string {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) throw new Error(`Invalid date: ${dateStr}`);
   return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
@@ -21,16 +26,21 @@ export function generateICS(event: CalendarEvent): string {
   const start = formatDateForICS(event.startTime);
   const end = formatDateForICS(event.endTime);
 
+  const uid = `${start}-${Math.random().toString(36).slice(2)}@pullup`;
+  const dtstamp = formatDateForICS(new Date().toISOString());
+
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//PullUp//Events//EN',
     'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtstamp}`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
-    `SUMMARY:${event.title}`,
-    `DESCRIPTION:${event.description}`,
-    `LOCATION:${event.location}`,
+    `SUMMARY:${escapeICSText(event.title)}`,
+    `DESCRIPTION:${escapeICSText(event.description)}`,
+    `LOCATION:${escapeICSText(event.location)}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n');
