@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-PullUp is a campus events mobile app for college students. Students discover and RSVP to events; student organizations create and manage events. Currently in the planning phase — no production code yet.
+PullUp is a campus events mobile app for college students. Students discover and RSVP to events; student organizations create and manage events.
 
 ## Tech Stack
 
@@ -21,11 +21,14 @@ PullUp is a campus events mobile app for college students. Students discover and
 ## Build & Dev Commands
 
 ```bash
-npx expo start          # Dev server
-npx expo start --ios    # iOS simulator
-npx expo start --android # Android emulator
-npm test                # Run Jest tests
-npm run lint            # ESLint
+npx expo start            # Dev server
+npx expo start --ios      # iOS simulator
+npx expo start --android  # Android emulator
+npm test                  # Run Jest tests (21 tests across 7 suites)
+npm run test:watch        # Jest watch mode
+npm run test:coverage     # Jest with coverage
+npm run lint              # ESLint
+npm run format            # Prettier
 ```
 
 ## Implementation Order
@@ -76,7 +79,11 @@ Key enums: `event_type` (academic, sports, social, career, club, greek, other), 
 ## Key Conventions
 
 - Design tokens live in `constants/theme.ts` (colors, typography, spacing, border radius)
-- Custom hooks in `hooks/` (`useEvents`, `useRSVP`, `useSavedEvents`, `useOrgFollows`)
+- Custom hooks in `hooks/` (`useEvents`, `useRSVP`, `useSavedEvents`, `useOrgFollows`, `useOrganizations`)
 - Supabase client config in `lib/supabase.ts`; calendar utils in `lib/calendar.ts`
+- Auth context in `lib/auth-context.tsx`; org switcher context in `lib/org-context.tsx`
+- Analytics tracking in `lib/analytics.ts`; CSV export in `lib/export-csv.ts`
+- TypeScript types in `lib/types.ts`
+- Reusable UI components in `components/` (Button, Card, Input, Chip, EventCard, EventFilters, AddToCalendar, Loading, EmptyState)
 - Environment variables prefixed with `EXPO_PUBLIC_` (Supabase URL and anon key)
 - Tests in `__tests__/` directory, mirroring source structure
