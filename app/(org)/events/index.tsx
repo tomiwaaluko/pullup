@@ -56,8 +56,8 @@ function OrgEventCard({ event }: { event: Event }) {
         capacity: event.capacity ?? undefined,
       });
       Alert.alert('Success', 'Event duplicated as draft.');
-    } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to duplicate event.');
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to duplicate event.');
     }
   };
 

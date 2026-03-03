@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import HeaderBackButton from '@/components/HeaderBackButton';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 
@@ -43,7 +44,14 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(org)" />
         <Stack.Screen name="org" />
-        <Stack.Screen name="events/[id]" options={{ headerShown: true, title: 'Event' }} />
+        <Stack.Screen
+          name="events/[id]"
+          options={{
+            headerShown: true,
+            title: 'Event',
+            headerLeft: () => <HeaderBackButton />,
+          }}
+        />
       </Stack>
     </>
   );

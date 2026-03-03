@@ -5,6 +5,11 @@ export interface Profile {
   id: string;
   email: string;
   name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  school: string | null;
+  graduation_year: number | null;
+  major: string | null;
   preferences: { interests: EventType[] };
   created_at: string;
   updated_at: string;

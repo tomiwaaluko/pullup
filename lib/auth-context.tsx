@@ -20,13 +20,21 @@ const DEV_SESSION: Session = {
   user: DEV_USER,
 } as Session;
 
+export interface SignUpMetadata {
+  first_name: string;
+  last_name: string;
+  school?: string;
+  graduation_year?: number;
+  major?: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
   isDevMode: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
+  signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
   devSignIn: () => void;
 }
@@ -62,13 +70,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
+    console.log('[Auth] signUp called for:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: {
+          first_name: metadata.first_name,
+          last_name: metadata.last_name,
+          name: `${metadata.first_name} ${metadata.last_name}`.trim(),
+          school: metadata.school,
+          graduation_year: metadata.graduation_year,
+          major: metadata.major,
+        },
+      },
     });
+    console.log('[Auth] signUp response — error:', error, 'user:', data?.user?.id, 'session:', !!data?.session);
     if (error) return { error: error as Error | null, needsConfirmation: false };
+    // Supabase returns a fake user with no identities when email already exists
+    if (data.user && data.user.identities?.length === 0) {
+      return { error: new Error('An account with this email already exists.'), needsConfirmation: false };
+    }
     const needsConfirmation = !data.session;
     return { error: null, needsConfirmation };
   };
