@@ -13,7 +13,10 @@
       "mcp__ide__getDiagnostics",
       "Bash(curl:*)",
       "Bash(npx expo:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(rm:*)",
+      "Bash(cd /c/Users/gokug/Documents/GitHub/pullup && rm -rf node_modules && npm install 2>&1)",
+      "Bash(cd /c/Users/gokug/Documents/GitHub/pullup && npx expo-doctor 2>&1 || npx expo doctor 2>&1)"
     ]
   }
 }
