@@ -6,13 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCreateOrganization } from '@/hooks/useOrganizations';
 import { EventType } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, EventTypeColors } from '@/constants/theme';
+import Button from '@/components/Button';
+import Input from '@/components/Input';
 
 const CATEGORIES: { label: string; value: EventType }[] = [
   { label: 'Academic', value: 'academic' },
@@ -36,24 +38,18 @@ export default function RegisterOrg() {
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
     const trimmedEmail = contactEmail.trim();
-
     if (!trimmedName || !trimmedDescription || !trimmedEmail) {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
-
     try {
       await createOrg.mutateAsync({
-        name: trimmedName,
-        description: trimmedDescription,
-        category,
-        contact_email: trimmedEmail,
+        name: trimmedName, description: trimmedDescription, category, contact_email: trimmedEmail,
       });
       router.replace('/org/success');
     } catch (err: any) {
@@ -69,21 +65,12 @@ export default function RegisterOrg() {
       </Text>
 
       <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Organization Name *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Computer Science Club"
-            placeholderTextColor={Colors.textMuted}
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
+        <Input label="Organization Name *" placeholder="e.g. Computer Science Club" value={name} onChangeText={setName} />
 
         <View style={styles.field}>
           <Text style={styles.label}>Description *</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={styles.textArea}
             placeholder="Tell students about your organization..."
             placeholderTextColor={Colors.textMuted}
             value={description}
@@ -96,49 +83,34 @@ export default function RegisterOrg() {
         <View style={styles.field}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.chipRow}>
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.value}
-                style={[styles.chip, category === cat.value && styles.chipSelected]}
-                onPress={() => setCategory(cat.value)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    category === cat.value && styles.chipTextSelected,
-                  ]}
+            {CATEGORIES.map((cat) => {
+              const active = category === cat.value;
+              const typeColor = EventTypeColors[cat.value] || EventTypeColors.other;
+              return (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[styles.chip, active && { backgroundColor: typeColor.bg, borderColor: `${typeColor.dot}30` }]}
+                  onPress={() => setCategory(cat.value)}
+                  activeOpacity={0.7}
                 >
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  {active && <View style={[styles.chipDot, { backgroundColor: typeColor.dot }]} />}
+                  <Text style={[styles.chipText, active && { color: typeColor.text, fontWeight: Typography.fontWeight.semibold }]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Contact Email *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="org@university.edu"
-            placeholderTextColor={Colors.textMuted}
-            value={contactEmail}
-            onChangeText={setContactEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-        </View>
+        <Input label="Contact Email *" placeholder="org@university.edu" value={contactEmail} onChangeText={setContactEmail} autoCapitalize="none" keyboardType="email-address" />
 
-        <TouchableOpacity
-          style={[styles.button, createOrg.isPending && styles.buttonDisabled]}
+        <Button
+          title="Register Organization"
           onPress={handleSubmit}
-          disabled={createOrg.isPending}
-        >
-          {createOrg.isPending ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>Register Organization</Text>
-          )}
-        </TouchableOpacity>
+          loading={createOrg.isPending}
+          style={styles.submitButton}
+        />
       </View>
     </ScrollView>
   );
@@ -150,14 +122,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: Spacing.lg,
-    paddingTop: Spacing.xxl,
+    padding: Spacing.xl,
+    paddingTop: Platform.OS === 'ios' ? 24 : 16,
+    paddingBottom: Spacing.xxxl,
   },
   title: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: Typography.fontSize.md,
@@ -173,18 +147,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
+    color: Colors.textSecondary,
+    marginLeft: Spacing.xs,
+    letterSpacing: 0.2,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.sm,
+  textArea: {
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    borderRadius: Radius.lg,
     padding: Spacing.lg,
     fontSize: Typography.fontSize.md,
     color: Colors.text,
-    backgroundColor: Colors.surface,
-  },
-  textArea: {
+    backgroundColor: Colors.surfaceSecondary,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -194,37 +168,27 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 1,
+    backgroundColor: Colors.white,
   },
-  chipSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  chipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   chipText: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text,
+    color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
   },
-  chipTextSelected: {
-    color: Colors.white,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.sm,
-    padding: Spacing.lg,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
+  submitButton: {
+    marginTop: Spacing.sm,
   },
 });

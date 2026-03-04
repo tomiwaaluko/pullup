@@ -10,12 +10,13 @@ export default function OnboardLayout() {
         headerBackVisible: true,
         headerLeft: () => <HeaderBackButton />,
         headerTitle: '',
-        headerStyle: { backgroundColor: Colors.background },
+        headerTransparent: true,
+        headerStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
-      <Stack.Screen name="interests" options={{ title: 'Interests' }} />
-      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="interests" options={{ title: '' }} />
+      <Stack.Screen name="notifications" options={{ title: '' }} />
     </Stack>
   );
 }

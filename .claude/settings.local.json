@@ -11,7 +11,9 @@
       "Bash(npx jest:*)",
       "Bash(cd /c/Users/gokug/Documents/GitHub/pullup && npm test 2>&1)",
       "mcp__ide__getDiagnostics",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx expo:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

@@ -1,11 +1,13 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Event } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 
 interface EventCardProps {
   event: Event;
+  variant?: 'default' | 'featured';
 }
 
 function formatDate(dateStr: string): string {
@@ -25,7 +27,7 @@ function formatTime(dateStr: string): string {
   });
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, variant = 'default' }: EventCardProps) {
   const router = useRouter();
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -33,8 +35,8 @@ export default function EventCard({ event }: EventCardProps) {
     Animated.spring(scale, {
       toValue: 0.97,
       useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
+      damping: 15,
+      stiffness: 300,
     }).start();
   };
 
@@ -42,10 +44,12 @@ export default function EventCard({ event }: EventCardProps) {
     Animated.spring(scale, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
+      damping: 12,
+      stiffness: 200,
     }).start();
   };
+
+  const typeColors = EventTypeColors[event.type] || EventTypeColors.other;
 
   return (
     <Pressable
@@ -53,36 +57,55 @@ export default function EventCard({ event }: EventCardProps) {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>
-            {event.title.charAt(0).toUpperCase()}
-          </Text>
+      <Animated.View style={[
+        styles.card,
+        variant === 'featured' && styles.cardFeatured,
+        { transform: [{ scale }] },
+      ]}>
+        <View style={styles.imageWrap}>
+          <LinearGradient
+            colors={variant === 'featured' ? [...Gradients.brand] : [...Gradients.electric]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.imagePlaceholder}
+          >
+            <Text style={styles.imageLetter}>
+              {event.title.charAt(0).toUpperCase()}
+            </Text>
+          </LinearGradient>
+
+          <View style={[styles.typeChip, { backgroundColor: typeColors.bg }]}>
+            <View style={[styles.typeDot, { backgroundColor: typeColors.dot }]} />
+            <Text style={[styles.typeText, { color: typeColors.text }]}>{event.type}</Text>
+          </View>
         </View>
 
         <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.typeTag}>
-              <Text style={styles.typeText}>{event.type}</Text>
-            </View>
-          </View>
-
           <Text style={styles.title} numberOfLines={2}>
             {event.title}
           </Text>
 
-          <View style={styles.details}>
-            <Text style={styles.detailText}>
-              📅 {formatDate(event.start_time)} at {formatTime(event.start_time)}
-            </Text>
-            <Text style={styles.detailText} numberOfLines={1}>
-              📍 {event.location}
-            </Text>
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Text style={styles.metaIcon}>{'  '}</Text>
+              <Text style={styles.metaText}>
+                {formatDate(event.start_time)} · {formatTime(event.start_time)}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Text style={styles.metaIcon}>{'  '}</Text>
+              <Text style={styles.metaText} numberOfLines={1}>
+                {event.location}
+              </Text>
+            </View>
           </View>
 
           {event.organization && (
-            <View style={styles.orgContainer}>
-              <View style={styles.orgAvatar} />
+            <View style={styles.orgRow}>
+              <LinearGradient
+                colors={[...Gradients.brand]}
+                style={styles.orgDot}
+              />
               <Text style={styles.orgName}>{event.organization.name}</Text>
             </View>
           )}
@@ -95,75 +118,94 @@ export default function EventCard({ event }: EventCardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     marginBottom: Spacing.lg,
     ...Shadows.md,
     overflow: 'hidden',
   },
+  cardFeatured: {
+    ...Shadows.lg,
+  },
+  imageWrap: {
+    position: 'relative',
+  },
   imagePlaceholder: {
     height: 140,
-    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imagePlaceholderText: {
-    fontSize: Typography.fontSize.xxxl,
+  imageLetter: {
+    fontSize: 56,
     color: Colors.white,
-    fontWeight: Typography.fontWeight.bold,
-    opacity: 0.5,
+    fontWeight: Typography.fontWeight.black,
+    opacity: 0.25,
+  },
+  typeChip: {
+    position: 'absolute',
+    top: Spacing.md,
+    left: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 1,
+    borderRadius: Radius.full,
+  },
+  typeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  typeText: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold,
+    textTransform: 'capitalize',
   },
   content: {
     padding: Spacing.lg,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-  typeTag: {
-    backgroundColor: Colors.secondary,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  typeText: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.white,
-    fontWeight: Typography.fontWeight.bold,
-    textTransform: 'uppercase',
-  },
   title: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.2,
   },
-  details: {
+  metaRow: {
     gap: Spacing.xs,
     marginBottom: Spacing.md,
   },
-  detailText: {
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  metaIcon: {
+    fontSize: 13,
+    width: 20,
+  },
+  metaText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textMuted,
     fontWeight: Typography.fontWeight.medium,
+    flex: 1,
   },
-  orgContainer: {
+  orgRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
+    gap: Spacing.sm,
   },
-  orgAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.accent,
-    marginRight: Spacing.sm,
+  orgDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   orgName: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.bold,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

@@ -8,7 +8,9 @@ import {
   Share,
   Linking,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEvent } from '@/hooks/useEvents';
 import { useIsRSVPd, useToggleRSVP } from '@/hooks/useRSVP';
@@ -16,7 +18,7 @@ import { useIsSaved, useToggleSavedEvent } from '@/hooks/useSavedEvents';
 import { useIsFollowingOrg, useToggleOrgFollow } from '@/hooks/useOrgFollows';
 import AddToCalendar from '@/components/AddToCalendar';
 import Button from '@/components/Button';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 
 function formatDateTime(dateStr: string): string {
   const d = new Date(dateStr);
@@ -58,44 +60,50 @@ export default function EventDetail() {
   const handleRSVP = () => toggleRSVP.mutate({ eventId: event.id, isRSVPd: !!isRSVPd });
   const handleSave = () => toggleSave.mutate({ eventId: event.id, isSaved: !!isSaved });
   const handleFollowOrg = () => {
-    if (event.org_id) {
-      toggleFollow.mutate({ orgId: event.org_id, isFollowing: !!isFollowing });
-    }
+    if (event.org_id) toggleFollow.mutate({ orgId: event.org_id, isFollowing: !!isFollowing });
   };
 
   const handleShare = async () => {
-    try {
-      await Share.share({ message: `Check out "${event.title}" on PullUp!` });
-    } catch {}
+    try { await Share.share({ message: `Check out "${event.title}" on PullUp!` }); } catch {}
   };
 
   const handleOpenMap = async () => {
     try {
       const encoded = encodeURIComponent(event.location);
       await Linking.openURL(`https://maps.google.com/?q=${encoded}`);
-    } catch {
-      Alert.alert('Error', 'Could not open maps.');
-    }
+    } catch { Alert.alert('Error', 'Could not open maps.'); }
   };
+
+  const typeColors = EventTypeColors[event.type] || EventTypeColors.other;
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroImage}>
-          <Text style={styles.heroTextPlaceholder}>{event.title.charAt(0)}</Text>
-        </View>
+        <LinearGradient
+          colors={[...Gradients.brand]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroImage}
+        >
+          <Text style={styles.heroLetter}>{event.title.charAt(0)}</Text>
+          <LinearGradient
+            colors={['transparent', 'rgba(11,11,20,0.6)']}
+            style={styles.heroOverlay}
+          />
+        </LinearGradient>
 
         <View style={styles.contentCard}>
           <View style={styles.header}>
-            <View style={styles.typeTag}>
-              <Text style={styles.typeText}>{event.type}</Text>
+            <View style={[styles.typeChip, { backgroundColor: typeColors.bg }]}>
+              <View style={[styles.typeDot, { backgroundColor: typeColors.dot }]} />
+              <Text style={[styles.typeText, { color: typeColors.text }]}>{event.type}</Text>
             </View>
             <View style={styles.secondaryActions}>
-              <TouchableOpacity style={styles.iconButton} onPress={handleSave} disabled={toggleSave.isPending}>
-                <Text style={styles.iconButtonText}>{isSaved ? '⭐️' : '☆'}</Text>
+              <TouchableOpacity style={styles.actionBtn} onPress={handleSave} disabled={toggleSave.isPending}>
+                <Text style={styles.actionBtnIcon}>{isSaved ? '★' : '☆'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
-                <Text style={styles.iconButtonText}>↗️</Text>
+              <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
+                <Text style={styles.actionBtnIcon}>↗</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -103,41 +111,70 @@ export default function EventDetail() {
           <Text style={styles.title}>{event.title}</Text>
 
           <View style={styles.infoCard}>
-            <Text style={styles.label}>📅 When</Text>
-            <Text style={styles.value}>{formatDateTime(event.start_time)}</Text>
-            <Text style={styles.value}>to {formatDateTime(event.end_time)}</Text>
-            
-            <View style={styles.divider} />
-            
-            <Text style={styles.label}>📍 Where</Text>
-            <TouchableOpacity onPress={handleOpenMap}>
-              <Text style={[styles.value, styles.link]}>{event.location}</Text>
-            </TouchableOpacity>
+            <View style={styles.infoRow}>
+              <View style={[styles.infoIconCircle, { backgroundColor: Colors.primaryMuted }]}>
+                <Text style={styles.infoIcon}>📅</Text>
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>When</Text>
+                <Text style={styles.infoValue}>{formatDateTime(event.start_time)}</Text>
+                <Text style={styles.infoValueSub}>to {formatDateTime(event.end_time)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoDivider} />
+
+            <View style={styles.infoRow}>
+              <View style={[styles.infoIconCircle, { backgroundColor: Colors.secondaryMuted }]}>
+                <Text style={styles.infoIcon}>📍</Text>
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Where</Text>
+                <TouchableOpacity onPress={handleOpenMap}>
+                  <Text style={[styles.infoValue, styles.linkText]}>{event.location}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {event.capacity && (
+              <>
+                <View style={styles.infoDivider} />
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconCircle, { backgroundColor: Colors.accentMuted }]}>
+                    <Text style={styles.infoIcon}>👥</Text>
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Capacity</Text>
+                    <Text style={styles.infoValue}>{event.capacity} spots available</Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
 
-          {event.capacity && (
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>👥 Capacity</Text>
-              <Text style={styles.value}>{event.capacity} spots available</Text>
-            </View>
-          )}
-
           {event.description && (
-            <View style={styles.detailRow}>
-              <Text style={styles.label}>📝 About</Text>
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>About</Text>
               <Text style={styles.description}>{event.description}</Text>
             </View>
           )}
 
           {event.organization && (
-            <View style={styles.orgSection}>
-              <Text style={styles.label}>🏢 Hosted by</Text>
+            <View style={styles.orgCard}>
+              <Text style={styles.sectionLabel}>Hosted by</Text>
               <View style={styles.orgRow}>
-                <View style={styles.orgAvatar} />
+                <LinearGradient
+                  colors={[...Gradients.warmSunset]}
+                  style={styles.orgAvatar}
+                >
+                  <Text style={styles.orgAvatarText}>{event.organization.name.charAt(0)}</Text>
+                </LinearGradient>
                 <View style={styles.orgInfo}>
                   <Text style={styles.orgName}>{event.organization.name}</Text>
                   <TouchableOpacity onPress={handleFollowOrg} disabled={toggleFollow.isPending}>
-                    <Text style={styles.followButtonText}>{isFollowing ? 'Following' : '+ Follow'}</Text>
+                    <Text style={[styles.followBtn, isFollowing && styles.followBtnActive]}>
+                      {isFollowing ? 'Following' : '+ Follow'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -150,7 +187,7 @@ export default function EventDetail() {
 
       <View style={styles.floatingAction}>
         <Button
-          title={isRSVPd ? "You're Going! 🎉" : "RSVP Now"}
+          title={isRSVPd ? "You're Going!" : "RSVP Now"}
           onPress={handleRSVP}
           variant={isRSVPd ? "secondary" : "primary"}
           loading={toggleRSVP.isPending}
@@ -175,23 +212,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heroImage: {
-    height: 300,
-    backgroundColor: Colors.primaryLight,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  heroTextPlaceholder: {
-    fontSize: 100,
+  heroLetter: {
+    fontSize: 120,
     color: Colors.white,
-    opacity: 0.3,
-    fontWeight: 'bold',
+    opacity: 0.15,
+    fontWeight: Typography.fontWeight.black,
+  },
+  heroOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
   },
   contentCard: {
     backgroundColor: Colors.background,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    marginTop: -40,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    marginTop: -32,
     padding: Spacing.xl,
+    paddingTop: Spacing.xxl,
     minHeight: 500,
   },
   header: {
@@ -200,81 +245,124 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.lg,
   },
-  typeTag: {
-    backgroundColor: Colors.accent,
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
     borderRadius: Radius.full,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+  },
+  typeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   typeText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.bold,
-    textTransform: 'uppercase',
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold,
+    textTransform: 'capitalize',
   },
   title: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.xl,
-    lineHeight: 38,
+    lineHeight: 36,
+    letterSpacing: -0.3,
   },
   infoCard: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
-    borderWidth: 2,
-    borderColor: Colors.border,
     ...Shadows.sm,
   },
-  divider: {
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  infoIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoIcon: {
+    fontSize: 18,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.xxs,
+  },
+  infoValue: {
+    fontSize: Typography.fontSize.md,
+    color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 22,
+  },
+  infoValueSub: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textMuted,
+    marginTop: Spacing.xxs,
+  },
+  infoDivider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.borderLight,
     marginVertical: Spacing.md,
   },
-  detailRow: {
-    marginBottom: Spacing.xl,
-  },
-  label: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-  },
-  value: {
-    fontSize: Typography.fontSize.md,
-    color: Colors.textMuted,
-    fontWeight: Typography.fontWeight.medium,
-    lineHeight: 24,
-  },
-  link: {
+  linkText: {
     color: Colors.primary,
     textDecorationLine: 'underline',
   },
+  section: {
+    marginBottom: Spacing.xl,
+  },
+  sectionLabel: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
   description: {
     fontSize: Typography.fontSize.md,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     lineHeight: 26,
   },
-  orgSection: {
-    marginBottom: Spacing.xl,
+  orgCard: {
     backgroundColor: Colors.white,
     padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 2,
-    borderColor: Colors.border,
+    borderRadius: Radius.xl,
+    marginBottom: Spacing.lg,
+    ...Shadows.sm,
   },
   orgRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
   },
   orgAvatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.secondary,
-    marginRight: Spacing.md,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orgAvatarText: {
+    color: Colors.white,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
   },
   orgInfo: {
     flex: 1,
@@ -283,30 +371,34 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  followButtonText: {
+  followBtn: {
     fontSize: Typography.fontSize.sm,
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.semibold,
+  },
+  followBtnActive: {
+    color: Colors.textMuted,
   },
   secondaryActions: {
     flexDirection: 'row',
     gap: Spacing.sm,
   },
-  iconButton: {
+  actionBtn: {
     backgroundColor: Colors.white,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
   },
-  iconButtonText: {
+  actionBtnIcon: {
     fontSize: 18,
+    color: Colors.primary,
   },
   floatingAction: {
     position: 'absolute',
@@ -314,10 +406,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: Spacing.xl,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
   rsvpBtn: {
     width: '100%',

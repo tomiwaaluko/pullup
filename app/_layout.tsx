@@ -4,10 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import HeaderBackButton from '@/components/HeaderBackButton';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
-
-// TODO: Add Sentry when ready and uncomment:
-// import * as Sentry from '@sentry/react-native';
-// Sentry.init({ dsn: process.env.SENTRY_DSN, enabled: process.env.NODE_ENV === 'production' });
+import { Colors } from '@/constants/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,8 +34,14 @@ function RootLayoutNav() {
 
   return (
     <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors.background },
+          animation: 'slide_from_right',
+        }}
+      >
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(onboard)" />
         <Stack.Screen name="(tabs)" />
@@ -48,8 +51,10 @@ function RootLayoutNav() {
           name="events/[id]"
           options={{
             headerShown: true,
-            title: 'Event',
+            title: '',
+            headerTransparent: true,
             headerLeft: () => <HeaderBackButton />,
+            headerStyle: { backgroundColor: 'transparent' },
           }}
         />
       </Stack>

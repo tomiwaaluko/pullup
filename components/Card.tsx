@@ -6,17 +6,18 @@ interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
+  variant?: 'default' | 'elevated' | 'outlined';
 }
 
-export default function Card({ children, style, onPress }: CardProps) {
+export default function Card({ children, style, onPress, variant = 'default' }: CardProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     Animated.spring(scale, {
-      toValue: 0.98,
+      toValue: 0.975,
       useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
+      damping: 15,
+      stiffness: 300,
     }).start();
   };
 
@@ -24,17 +25,25 @@ export default function Card({ children, style, onPress }: CardProps) {
     Animated.spring(scale, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
+      damping: 12,
+      stiffness: 200,
     }).start();
   };
 
+  const variantStyle =
+    variant === 'elevated' ? styles.elevated :
+    variant === 'outlined' ? styles.outlined :
+    styles.default;
+
   const cardContent = (
-    <Animated.View style={[
-      styles.card, 
-      style,
-      onPress && { transform: [{ scale }] }
-    ]}>
+    <Animated.View
+      style={[
+        styles.card,
+        variantStyle,
+        style,
+        onPress && { transform: [{ scale }] },
+      ]}
+    >
       {children}
     </Animated.View>
   );
@@ -52,9 +61,20 @@ export default function Card({ children, style, onPress }: CardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.xl,
+    backgroundColor: Colors.white,
+  },
+  default: {
     ...Shadows.md,
+  },
+  elevated: {
+    ...Shadows.lg,
+  },
+  outlined: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: 'transparent',
+    elevation: 0,
   },
 });

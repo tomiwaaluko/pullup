@@ -1,41 +1,53 @@
 import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, Pressable, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { EventType } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 import Button from '@/components/Button';
 
-const INTEREST_OPTIONS: { label: string; value: EventType; color: string; icon: string }[] = [
-  { label: 'Academic', value: 'academic', color: Colors.primary, icon: '📚' },
-  { label: 'Sports', value: 'sports', color: Colors.error, icon: '🏀' },
-  { label: 'Social', value: 'social', color: Colors.secondary, icon: '🎉' },
-  { label: 'Career', value: 'career', color: Colors.success, icon: '💼' },
-  { label: 'Club', value: 'club', color: Colors.warning, icon: '🎨' },
-  { label: 'Greek Life', value: 'greek', color: Colors.primaryDark, icon: '🏛️' },
-  { label: 'Other', value: 'other', color: Colors.textMuted, icon: '✨' },
+const INTEREST_OPTIONS: { label: string; value: EventType; icon: string }[] = [
+  { label: 'Academic', value: 'academic', icon: '📚' },
+  { label: 'Sports', value: 'sports', icon: '🏀' },
+  { label: 'Social', value: 'social', icon: '🎉' },
+  { label: 'Career', value: 'career', icon: '💼' },
+  { label: 'Club', value: 'club', icon: '🎨' },
+  { label: 'Greek Life', value: 'greek', icon: '🏛️' },
+  { label: 'Other', value: 'other', icon: '✨' },
 ];
 
 function InterestTile({ option, selected, onPress }: any) {
   const scale = useRef(new Animated.Value(1)).current;
+  const typeColor = EventTypeColors[option.value] || EventTypeColors.other;
 
   const handlePressIn = () => {
-    Animated.spring(scale, { toValue: 0.9, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+    Animated.spring(scale, { toValue: 0.92, useNativeDriver: true, damping: 15, stiffness: 300 }).start();
   };
   const handlePressOut = () => {
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, damping: 12, stiffness: 200 }).start();
   };
 
   return (
     <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} style={styles.tileWrapper}>
       <Animated.View style={[
         styles.tile,
-        selected ? { backgroundColor: option.color, borderColor: option.color } : { borderColor: Colors.border },
-        { transform: [{ scale }] }
+        selected
+          ? { backgroundColor: typeColor.bg, borderColor: `${typeColor.dot}30` }
+          : { borderColor: Colors.border, backgroundColor: Colors.white },
+        { transform: [{ scale }] },
       ]}>
         <Text style={styles.tileIcon}>{option.icon}</Text>
-        <Text style={[styles.tileText, selected && styles.tileTextSelected]}>{option.label}</Text>
+        <Text style={[
+          styles.tileText,
+          selected && { color: typeColor.text, fontWeight: Typography.fontWeight.bold },
+        ]}>
+          {option.label}
+        </Text>
+        {selected && <View style={[styles.checkBadge, { backgroundColor: typeColor.dot }]}>
+          <Text style={styles.checkMark}>✓</Text>
+        </View>}
       </Animated.View>
     </Pressable>
   );
@@ -60,24 +72,27 @@ export default function Interests() {
           .select('preferences')
           .eq('id', user.id)
           .single();
-
         const existing = (profile?.preferences as Record<string, unknown>) ?? {};
         await supabase
           .from('profiles')
           .update({ preferences: { ...existing, interests: selected } })
           .eq('id', user.id);
-      } catch {
-      }
+      } catch {}
     }
     router.push('/(onboard)/notifications');
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        style={styles.headerGradient}
+      >
         <Text style={styles.title}>What are you into?</Text>
         <Text style={styles.subtitle}>Select your interests to personalize your feed.</Text>
+      </LinearGradient>
 
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.grid}>
           {INTEREST_OPTIONS.map((option) => (
             <InterestTile
@@ -88,6 +103,10 @@ export default function Interests() {
             />
           ))}
         </View>
+
+        {selected.length > 0 && (
+          <Text style={styles.selectedCount}>{selected.length} selected</Text>
+        )}
       </ScrollView>
 
       <View style={styles.bottom}>
@@ -105,23 +124,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingTop: 80,
   },
-  content: {
-    paddingHorizontal: Spacing.xl,
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 72 : 52,
     paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
   },
   title: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    color: Colors.textOnDark,
+    marginBottom: Spacing.xs,
+    letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.textMuted,
-    marginBottom: Spacing.xxl,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textOnDarkMuted,
     lineHeight: 24,
+  },
+  content: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxl,
   },
   grid: {
     flexDirection: 'row',
@@ -133,11 +157,11 @@ const styles = StyleSheet.create({
     width: '47%',
   },
   tile: {
-    borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    position: 'relative',
     ...Shadows.sm,
   },
   tileIcon: {
@@ -146,18 +170,37 @@ const styles = StyleSheet.create({
   },
   tileText: {
     fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
-  tileTextSelected: {
+  checkBadge: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
     color: Colors.white,
+    fontSize: 12,
+    fontWeight: Typography.fontWeight.bold,
+  },
+  selectedCount: {
+    textAlign: 'center',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.primary,
+    fontWeight: Typography.fontWeight.semibold,
+    marginTop: Spacing.xl,
   },
   bottom: {
     padding: Spacing.xl,
     paddingBottom: Spacing.xxxl,
     backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
 });

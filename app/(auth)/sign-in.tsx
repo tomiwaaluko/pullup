@@ -9,9 +9,10 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 
@@ -43,98 +44,146 @@ export default function SignIn() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="always"
-        showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal]}
+        style={styles.heroGradient}
       >
-        <View style={styles.header}>
+        <View style={styles.heroContent}>
+          <LinearGradient
+            colors={[...Gradients.brand]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.logoBadge}
+          >
+            <Text style={styles.logoIcon}>P</Text>
+          </LinearGradient>
           <Text style={styles.title}>PullUp</Text>
-          <Text style={styles.subtitle}>Discover campus events</Text>
+          <Text style={styles.subtitle}>Discover what's happening on campus</Text>
         </View>
+      </LinearGradient>
 
-        <View style={styles.card}>
-          <View style={styles.form}>
-            <Input
-              label="Email"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+      <KeyboardAvoidingView
+        style={styles.formArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="always"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Welcome back</Text>
+            <View style={styles.form}>
+              <Input
+                label="Email"
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <Input
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
-            <Button
-              title="Sign In"
-              onPress={handleSignIn}
-              loading={loading}
-              style={styles.button}
-            />
+              <Button
+                title="Sign In"
+                onPress={handleSignIn}
+                loading={loading}
+                style={styles.button}
+              />
+            </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Link href="/(auth)/sign-up" asChild>
+                <Text style={styles.link}>Sign Up</Text>
+              </Link>
+            </View>
+
+            {__DEV__ && (
+              <Button
+                title="Browse as Guest (Dev)"
+                onPress={devSignIn}
+                variant="ghost"
+                size="md"
+                style={styles.devButton}
+              />
+            )}
           </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Link href="/(auth)/sign-up" asChild>
-              <Text style={styles.link}>Sign Up</Text>
-            </Link>
-          </View>
-
-          {__DEV__ && (
-            <Button
-              title="Browse as Guest (Dev)"
-              onPress={devSignIn}
-              variant="secondary"
-              style={styles.devButton}
-            />
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.background,
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: Spacing.xl,
-  },
-  header: {
+  heroGradient: {
+    paddingTop: Platform.OS === 'ios' ? 80 : 60,
+    paddingBottom: 48,
     alignItems: 'center',
-    marginBottom: Spacing.xxxl,
+  },
+  heroContent: {
+    alignItems: 'center',
+  },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.lg,
+    ...Shadows.glow,
+  },
+  logoIcon: {
+    fontSize: 28,
+    fontWeight: Typography.fontWeight.black,
+    color: Colors.white,
   },
   title: {
     fontSize: Typography.fontSize.xxxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.white,
-    letterSpacing: 1,
+    color: Colors.textOnDark,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.primaryLight,
-    marginTop: Spacing.sm,
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textOnDarkMuted,
+    marginTop: Spacing.xs,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  formArea: {
+    flex: 1,
+    marginTop: -24,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   card: {
+    flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: Radius.xl,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
     padding: Spacing.xl,
-    ...Shadows.floating,
+    paddingTop: Spacing.xxl,
+    ...Shadows.lg,
+  },
+  cardTitle: {
+    fontSize: Typography.fontSize.xxl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xl,
+    letterSpacing: -0.3,
   },
   form: {
     gap: Spacing.lg,
@@ -145,10 +194,10 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.xxl,
     paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
   footerText: {
     color: Colors.textMuted,

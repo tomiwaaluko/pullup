@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { EventType } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, EventTypeColors } from '@/constants/theme';
 
 const EVENT_TYPES: { label: string; value: EventType | undefined }[] = [
   { label: 'All', value: undefined },
@@ -34,36 +34,44 @@ export default function EventFilters({
 }: EventFiltersProps) {
   return (
     <View style={styles.container}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
-        {TIME_FILTERS.map((filter) => (
-          <TouchableOpacity
-            key={filter.value}
-            style={[styles.chip, selectedTime === filter.value && styles.chipActive]}
-            onPress={() => onTimeChange(filter.value)}
-          >
-            <Text
-              style={[styles.chipText, selectedTime === filter.value && styles.chipTextActive]}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {TIME_FILTERS.map((filter) => {
+          const active = selectedTime === filter.value;
+          return (
+            <TouchableOpacity
+              key={filter.value}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => onTimeChange(filter.value)}
+              activeOpacity={0.7}
             >
-              {filter.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              {active && <View style={styles.activeDot} />}
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.row}>
-        {EVENT_TYPES.map((type) => (
-          <TouchableOpacity
-            key={type.label}
-            style={[styles.chip, selectedType === type.value && styles.chipActive]}
-            onPress={() => onTypeChange(type.value)}
-          >
-            <Text
-              style={[styles.chipText, selectedType === type.value && styles.chipTextActive]}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {EVENT_TYPES.map((type) => {
+          const active = selectedType === type.value;
+          const dotColor = type.value ? EventTypeColors[type.value]?.dot : undefined;
+          return (
+            <TouchableOpacity
+              key={type.label}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => onTypeChange(type.value)}
+              activeOpacity={0.7}
             >
-              {type.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              {active && dotColor && <View style={[styles.activeDot, { backgroundColor: dotColor }]} />}
+              {active && !dotColor && <View style={styles.activeDot} />}
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {type.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -74,27 +82,38 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },
-  row: {
-    flexGrow: 0,
+  scrollContent: {
+    paddingRight: Spacing.lg,
+    gap: Spacing.sm,
   },
   chip: {
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    marginRight: Spacing.sm,
+    paddingVertical: Spacing.sm + 1,
+    backgroundColor: Colors.white,
   },
   chipActive: {
+    backgroundColor: Colors.primaryMuted,
+    borderColor: 'rgba(139, 92, 246, 0.25)',
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   chipText: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text,
+    color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
   },
   chipTextActive: {
-    color: Colors.white,
+    color: Colors.primary,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

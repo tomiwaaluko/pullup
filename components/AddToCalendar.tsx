@@ -32,10 +32,10 @@ export default function AddToCalendar({ event }: AddToCalendarProps) {
     <View style={styles.container}>
       <Text style={styles.label}>Add to Calendar</Text>
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.button} onPress={() => handleAdd('google')}>
+        <TouchableOpacity style={styles.button} onPress={() => handleAdd('google')} activeOpacity={0.7}>
           <Text style={styles.buttonText}>Google</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => handleAdd('outlook')}>
+        <TouchableOpacity style={styles.button} onPress={() => handleAdd('outlook')} activeOpacity={0.7}>
           <Text style={styles.buttonText}>Outlook</Text>
         </TouchableOpacity>
       </View>
@@ -50,23 +50,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
+    color: Colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   buttons: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   button: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    borderColor: Colors.borderLight,
   },
   buttonText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

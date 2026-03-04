@@ -7,10 +7,13 @@ import {
   RefreshControl,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRSVPs } from '@/hooks/useRSVP';
 import EventCard from '@/components/EventCard';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import EmptyState from '@/components/EmptyState';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 
 export default function MyRSVPs() {
   const { data: rsvps, isLoading, isRefetching, refetch } = useRSVPs();
@@ -24,45 +27,82 @@ export default function MyRSVPs() {
 
   const events = showPast ? past : upcoming;
 
+  const renderHeader = () => (
+    <View>
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        style={styles.headerGradient}
+      >
+        <Text style={styles.pageTitle}>My RSVPs</Text>
+        <Text style={styles.pageSubtitle}>Events you're attending</Text>
+      </LinearGradient>
+
+      <View style={styles.toggleWrap}>
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleButton, !showPast && styles.toggleActive]}
+            onPress={() => setShowPast(false)}
+            activeOpacity={0.7}
+          >
+            {!showPast && (
+              <LinearGradient
+                colors={[...Gradients.brand]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
+            <Text style={[styles.toggleText, !showPast && styles.toggleTextActive]}>
+              Upcoming ({upcoming.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, showPast && styles.toggleActive]}
+            onPress={() => setShowPast(true)}
+            activeOpacity={0.7}
+          >
+            {showPast && (
+              <LinearGradient
+                colors={[...Gradients.brand]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
+            <Text style={[styles.toggleText, showPast && styles.toggleTextActive]}>
+              Past ({past.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.toggleRow}>
-        <TouchableOpacity
-          style={[styles.toggleButton, !showPast && styles.toggleActive]}
-          onPress={() => setShowPast(false)}
-        >
-          <Text style={[styles.toggleText, !showPast && styles.toggleTextActive]}>
-            Upcoming ({upcoming.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleButton, showPast && styles.toggleActive]}
-          onPress={() => setShowPast(true)}
-        >
-          <Text style={[styles.toggleText, showPast && styles.toggleTextActive]}>
-            Past ({past.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : events.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>
-            {showPast ? 'No past RSVPs' : "You haven't RSVP'd to any upcoming events"}
-          </Text>
-          <Text style={styles.emptySubtext}>
-            {showPast ? '' : 'Browse the home feed to find events!'}
-          </Text>
+        <View style={styles.container}>
+          {renderHeader()}
+          <EmptyState
+            icon={showPast ? '📅' : '🎟️'}
+            title={showPast ? 'No past RSVPs' : "No upcoming events"}
+            message={showPast ? '' : 'Browse the home feed to find events!'}
+          />
         </View>
       ) : (
         <FlatList
           data={events}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <EventCard event={item} />}
+          ListHeaderComponent={renderHeader}
+          renderItem={({ item }) => (
+            <View style={styles.cardWrap}>
+              <EventCard event={item} />
+            </View>
+          )}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
@@ -81,50 +121,63 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 64 : 44,
+    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+  },
+  pageTitle: {
+    fontSize: Typography.fontSize.xxl,
+    fontWeight: Typography.fontWeight.black,
+    color: Colors.textOnDark,
+    letterSpacing: -0.3,
+  },
+  pageSubtitle: {
+    fontSize: Typography.fontSize.md,
+    color: Colors.textOnDarkMuted,
+    marginTop: Spacing.xxs,
+  },
+  toggleWrap: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: -Spacing.lg,
+    marginBottom: Spacing.lg,
   },
   toggleRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    marginBottom: Spacing.lg,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.xl,
+    padding: Spacing.xs,
+    ...Shadows.sm,
   },
   toggleButton: {
     flex: 1,
     paddingVertical: Spacing.md,
-    borderRadius: Radius.sm,
+    borderRadius: Radius.lg,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    overflow: 'hidden',
   },
   toggleActive: {
-    backgroundColor: Colors.primary,
+    ...Shadows.glow,
   },
   toggleText: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.textMuted,
   },
   toggleTextActive: {
     color: Colors.white,
   },
   list: {
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 110,
+  },
+  cardWrap: {
+    paddingHorizontal: Spacing.lg,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-    marginTop: Spacing.sm,
-    textAlign: 'center',
   },
 });

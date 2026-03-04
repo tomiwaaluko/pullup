@@ -8,12 +8,15 @@ import {
   Alert,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCurrentOrg } from '@/lib/org-context';
 import { useUpdateOrganization } from '@/hooks/useOrganizations';
 import { EventType } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
+import Button from '@/components/Button';
+import Input from '@/components/Input';
 
 const CATEGORIES: { label: string; value: EventType }[] = [
   { label: 'Academic', value: 'academic' },
@@ -50,14 +53,9 @@ export default function OrgProfile() {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;
     }
-
     try {
       const updated = await updateOrg.mutateAsync({
-        id: currentOrg.id,
-        name,
-        description,
-        category,
-        contact_email: contactEmail,
+        id: currentOrg.id, name, description, category, contact_email: contactEmail,
       });
       setCurrentOrg(updated);
       Alert.alert('Success', 'Organization profile updated.');
@@ -77,73 +75,63 @@ export default function OrgProfile() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Organization Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
+        <Input label="Organization Name" value={name} onChangeText={setName} />
 
         <View style={styles.field}>
           <Text style={styles.label}>Description</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={styles.textArea}
             value={description}
             onChangeText={setDescription}
             multiline
             numberOfLines={4}
+            placeholderTextColor={Colors.textMuted}
           />
         </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.chipRow}>
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.value}
-                style={[styles.chip, category === cat.value && styles.chipSelected]}
-                onPress={() => setCategory(cat.value)}
-              >
-                <Text
-                  style={[styles.chipText, category === cat.value && styles.chipTextSelected]}
+            {CATEGORIES.map((cat) => {
+              const active = category === cat.value;
+              const typeColor = EventTypeColors[cat.value] || EventTypeColors.other;
+              return (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[
+                    styles.chip,
+                    active && { backgroundColor: typeColor.bg, borderColor: `${typeColor.dot}30` },
+                  ]}
+                  onPress={() => setCategory(cat.value)}
+                  activeOpacity={0.7}
                 >
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  {active && <View style={[styles.chipDot, { backgroundColor: typeColor.dot }]} />}
+                  <Text style={[styles.chipText, active && { color: typeColor.text, fontWeight: Typography.fontWeight.semibold }]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Contact Email</Text>
-          <TextInput
-            style={styles.input}
-            value={contactEmail}
-            onChangeText={setContactEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-        </View>
+        <Input
+          label="Contact Email"
+          value={contactEmail}
+          onChangeText={setContactEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
-        <TouchableOpacity
-          style={[styles.button, updateOrg.isPending && styles.buttonDisabled]}
+        <Button
+          title="Save Changes"
           onPress={handleSave}
-          disabled={updateOrg.isPending}
-        >
-          {updateOrg.isPending ? (
-            <ActivityIndicator color={Colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>Save Changes</Text>
-          )}
-        </TouchableOpacity>
+          loading={updateOrg.isPending}
+          style={styles.saveButton}
+        />
       </View>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.replace('/(tabs)')}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(tabs)')} activeOpacity={0.7}>
         <Text style={styles.backButtonText}>Switch to Member View</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -156,7 +144,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
+    paddingTop: Platform.OS === 'ios' ? 64 : 44,
     paddingBottom: Spacing.xxl,
   },
   center: {
@@ -173,18 +162,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
+    color: Colors.textSecondary,
+    marginLeft: Spacing.xs,
+    letterSpacing: 0.2,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.sm,
+  textArea: {
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    borderRadius: Radius.lg,
     padding: Spacing.lg,
     fontSize: Typography.fontSize.md,
     color: Colors.text,
-    backgroundColor: Colors.surface,
-  },
-  textArea: {
+    backgroundColor: Colors.surfaceSecondary,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -194,37 +183,28 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 1,
+    backgroundColor: Colors.white,
   },
-  chipSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  chipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   chipText: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text,
+    color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
   },
-  chipTextSelected: {
-    color: Colors.white,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.sm,
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
+  saveButton: {
+    marginTop: Spacing.sm,
   },
   backButton: {
     marginTop: Spacing.xxl,
@@ -234,6 +214,6 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: Colors.primary,
     fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

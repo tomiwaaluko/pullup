@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   RefreshControl,
   StyleSheet,
   ScrollView,
+  Animated,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEvents } from '@/hooks/useEvents';
 import { EventType } from '@/lib/types';
 import EventCard from '@/components/EventCard';
 import EventFilters from '@/components/EventFilters';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
@@ -38,37 +41,54 @@ export default function Home() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.greeting}>Hey there! 👋</Text>
-      <Text style={styles.headerSubtitle}>Ready for some fun?</Text>
-      
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search events..."
-          placeholderTextColor={Colors.textMuted}
-          value={search}
-          onChangeText={setSearch}
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.greeting}>Hey there 👋</Text>
+            <Text style={styles.headerSubtitle}>Discover what's happening</Text>
+          </View>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search events..."
+              placeholderTextColor={Colors.textOnDarkMuted}
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
+        </View>
+      </LinearGradient>
+
+      <View style={styles.filtersWrap}>
+        <EventFilters
+          selectedType={typeFilter}
+          selectedTime={timeFilter}
+          onTypeChange={setTypeFilter}
+          onTimeChange={setTimeFilter}
         />
       </View>
 
-      <EventFilters
-        selectedType={typeFilter}
-        selectedTime={timeFilter}
-        onTypeChange={setTypeFilter}
-        onTimeChange={setTimeFilter}
-      />
-
       {featuredEvents.length > 0 && !search && typeFilter === undefined && timeFilter === 'all' && (
         <View style={styles.featuredSection}>
-          <Text style={styles.sectionTitle}>🔥 Hot Events</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Trending Now</Text>
+            <View style={styles.liveDot} />
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
             {featuredEvents.map(event => (
               <View key={event.id} style={styles.featuredCardWrapper}>
-                <EventCard event={event} />
+                <EventCard event={event} variant="featured" />
               </View>
             ))}
           </ScrollView>
-          <Text style={styles.sectionTitle}>More Events</Text>
+          <Text style={styles.sectionTitle}>All Events</Text>
         </View>
       )}
     </View>
@@ -119,51 +139,86 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   list: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   headerContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 64 : 44,
+    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
   },
   greeting: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
+    color: Colors.textOnDark,
+    letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.textMuted,
-    marginBottom: Spacing.xl,
+    fontSize: Typography.fontSize.md,
+    color: Colors.textOnDarkMuted,
+    marginTop: Spacing.xxs,
     fontWeight: Typography.fontWeight.medium,
   },
   searchContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   searchBar: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: Spacing.md + 2,
     fontSize: Typography.fontSize.md,
-    color: Colors.text,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    ...Shadows.sm,
+    color: Colors.textOnDark,
+  },
+  filtersWrap: {
+    paddingHorizontal: Spacing.lg,
+    marginTop: -Spacing.sm,
   },
   featuredSection: {
-    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.md,
-    marginTop: Spacing.sm,
+    letterSpacing: -0.2,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.error,
   },
   featuredScroll: {
     gap: Spacing.lg,
     paddingBottom: Spacing.lg,
+    paddingRight: Spacing.lg,
   },
   featuredCardWrapper: {
     width: 280,

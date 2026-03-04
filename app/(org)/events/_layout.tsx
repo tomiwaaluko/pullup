@@ -10,14 +10,14 @@ export default function OrgEventsLayout() {
         headerBackVisible: true,
         headerLeft: () => <HeaderBackButton />,
         headerStyle: { backgroundColor: Colors.background },
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen
         name="index"
         options={{
           title: 'Events',
-          headerShown: true,
-          headerLeft: () => null,
+          headerShown: false,
         }}
       />
       <Stack.Screen

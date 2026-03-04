@@ -5,14 +5,15 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCurrentOrg } from '@/lib/org-context';
-import { useOrgEvents } from '@/hooks/useOrganizations';
-import { useMyOrganizations } from '@/hooks/useOrganizations';
+import { useOrgEvents, useMyOrganizations } from '@/hooks/useOrganizations';
 import EventCard from '@/components/EventCard';
 import Button from '@/components/Button';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 
 export default function OrgOverview() {
   const router = useRouter();
@@ -32,65 +33,75 @@ export default function OrgOverview() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Org Switcher */}
-      {orgs && orgs.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.switcher}>
-          {orgs.map((org) => (
-            <TouchableOpacity
-              key={org.id}
-              style={[
-                styles.switcherChip,
-                currentOrg.id === org.id && styles.switcherChipActive,
-              ]}
-              onPress={() => setCurrentOrg(org)}
-            >
-              <Text
-                style={[
-                  styles.switcherText,
-                  currentOrg.id === org.id && styles.switcherTextActive,
-                ]}
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        style={styles.headerGradient}
+      >
+        {orgs && orgs.length > 1 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.switcher}>
+            {orgs.map((org) => (
+              <TouchableOpacity
+                key={org.id}
+                style={[styles.switcherChip, currentOrg.id === org.id && styles.switcherChipActive]}
+                onPress={() => setCurrentOrg(org)}
+                activeOpacity={0.7}
               >
-                {org.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+                <Text style={[styles.switcherText, currentOrg.id === org.id && styles.switcherTextActive]}>
+                  {org.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
-      <Text style={styles.welcomeText}>Dashboard</Text>
-      <Text style={styles.orgNameHeadline}>{currentOrg.name}</Text>
+        <Text style={styles.welcomeText}>Dashboard</Text>
+        <Text style={styles.orgNameHeadline}>{currentOrg.name}</Text>
+      </LinearGradient>
 
-      {/* Summary Cards */}
-      <View style={styles.summaryRow}>
-        <View style={[styles.summaryCard, { backgroundColor: Colors.primary }]}>
-          <Text style={styles.summaryNumber}>{upcomingEvents.length}</Text>
-          <Text style={styles.summaryLabel}>Upcoming Events</Text>
+      <View style={styles.body}>
+        <View style={styles.summaryRow}>
+          <LinearGradient
+            colors={[...Gradients.brand]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.summaryCard}
+          >
+            <Text style={styles.summaryNumber}>{upcomingEvents.length}</Text>
+            <Text style={styles.summaryLabel}>Upcoming</Text>
+          </LinearGradient>
+          <LinearGradient
+            colors={[...Gradients.warmSunset]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.summaryCard}
+          >
+            <Text style={styles.summaryNumber}>{events?.length ?? 0}</Text>
+            <Text style={styles.summaryLabel}>Total Events</Text>
+          </LinearGradient>
         </View>
-        <View style={[styles.summaryCard, { backgroundColor: Colors.secondary }]}>
-          <Text style={styles.summaryNumber}>{events?.length ?? 0}</Text>
-          <Text style={styles.summaryLabel}>Total Events</Text>
-        </View>
+
+        <Button
+          title="+ Create New Event"
+          onPress={() => router.push('/(org)/events/new')}
+          style={styles.createButton}
+        />
+
+        <Text style={styles.sectionTitle}>Recent Events</Text>
+        {isLoading ? (
+          <ActivityIndicator color={Colors.primary} />
+        ) : events && events.length > 0 ? (
+          [...events]
+            .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime())
+            .slice(0, 5)
+            .map((event) => <EventCard key={event.id} event={event} />)
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>📋</Text>
+            <Text style={styles.emptyText}>No events yet</Text>
+            <Text style={styles.emptySubtext}>Create your first event to get started!</Text>
+          </View>
+        )}
       </View>
-
-      {/* Create Event CTA */}
-      <Button
-        title="+ Create New Event"
-        onPress={() => router.push('/(org)/events/new')}
-        style={styles.createButton}
-      />
-
-      {/* Recent Events */}
-      <Text style={styles.sectionTitle}>Recent Events</Text>
-      {isLoading ? (
-        <ActivityIndicator color={Colors.primary} />
-      ) : events && events.length > 0 ? (
-        [...events].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()).slice(0, 5).map((event) => <EventCard key={event.id} event={event} />)
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No events yet</Text>
-          <Text style={styles.emptySubtext}>Create your first event to get started!</Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -101,7 +112,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
   },
   center: {
@@ -109,48 +119,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 64 : 44,
+    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.xl,
+  },
   switcher: {
     flexGrow: 0,
     marginBottom: Spacing.xl,
   },
   switcherChip: {
-    borderWidth: 2,
-    borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.sm,
     marginRight: Spacing.sm,
-    backgroundColor: Colors.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   switcherChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-    ...Shadows.sm,
+    backgroundColor: 'rgba(139, 92, 246, 0.3)',
+    borderColor: 'rgba(139, 92, 246, 0.4)',
   },
   switcherText: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.bold,
+    color: Colors.textOnDarkMuted,
+    fontWeight: Typography.fontWeight.semibold,
   },
   switcherTextActive: {
     color: Colors.white,
   },
   welcomeText: {
-    fontSize: Typography.fontSize.md,
-    color: Colors.textMuted,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textOnDarkMuted,
+    fontWeight: Typography.fontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   orgNameHeadline: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
-    marginBottom: Spacing.xl,
+    color: Colors.textOnDark,
+    letterSpacing: -0.3,
+  },
+  body: {
+    paddingHorizontal: Spacing.xl,
+    marginTop: -Spacing.sm,
   },
   summaryRow: {
     flexDirection: 'row',
-    gap: Spacing.lg,
+    gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
   summaryCard: {
@@ -158,7 +176,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     alignItems: 'center',
-    ...Shadows.floating,
+    ...Shadows.glow,
   },
   summaryNumber: {
     fontSize: Typography.fontSize.xxxl,
@@ -167,10 +185,9 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.white,
-    fontWeight: Typography.fontWeight.bold,
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: Typography.fontWeight.semibold,
     marginTop: Spacing.xs,
-    opacity: 0.9,
   },
   createButton: {
     marginBottom: Spacing.xxl,
@@ -180,15 +197,20 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     marginBottom: Spacing.lg,
+    letterSpacing: -0.2,
   },
   emptyState: {
     alignItems: 'center',
     paddingVertical: Spacing.xxl,
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    borderWidth: 2,
+    borderRadius: Radius.xl,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     borderStyle: 'dashed',
+  },
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: Spacing.md,
   },
   emptyText: {
     fontSize: Typography.fontSize.lg,
@@ -196,8 +218,8 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   emptySubtext: {
-    fontSize: Typography.fontSize.md,
+    fontSize: Typography.fontSize.sm,
     color: Colors.textMuted,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
 });

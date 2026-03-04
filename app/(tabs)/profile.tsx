@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Profile } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -51,41 +52,67 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.profileHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {(profile?.name || profile?.email || '?')[0].toUpperCase()}
-          </Text>
+      <LinearGradient
+        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.profileHeader}>
+          <LinearGradient
+            colors={[...Gradients.brand]}
+            style={styles.avatar}
+          >
+            <Text style={styles.avatarText}>
+              {(profile?.name || profile?.email || '?')[0].toUpperCase()}
+            </Text>
+          </LinearGradient>
+          <Text style={styles.name}>{profile?.name || 'No name set'}</Text>
+          <Text style={styles.email}>{profile?.email}</Text>
+          {profile?.school && (
+            <View style={styles.schoolBadge}>
+              <Text style={styles.schoolText}>{profile.school}</Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.name}>{profile?.name || 'No name set'}</Text>
-        <Text style={styles.email}>{profile?.email}</Text>
-      </View>
+      </LinearGradient>
 
-      {profile?.preferences?.interests && profile.preferences.interests.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <View style={styles.chipRow}>
-            {profile.preferences.interests.map((interest) => (
-              <View key={interest} style={styles.chip}>
-                <Text style={styles.chipText}>{interest}</Text>
-              </View>
-            ))}
+      <View style={styles.content}>
+        {profile?.preferences?.interests && profile.preferences.interests.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Interests</Text>
+            <View style={styles.chipRow}>
+              {profile.preferences.interests.map((interest) => {
+                const typeColor = EventTypeColors[interest] || EventTypeColors.other;
+                return (
+                  <View key={interest} style={[styles.chip, { backgroundColor: typeColor.bg }]}>
+                    <View style={[styles.chipDot, { backgroundColor: typeColor.dot }]} />
+                    <Text style={[styles.chipText, { color: typeColor.text }]}>{interest}</Text>
+                  </View>
+                );
+              })}
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      <View style={styles.section}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push('/org/register')}
-        >
-          <Text style={styles.menuItemText}>Register an Organization</Text>
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/org/register')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: Colors.primaryMuted }]}>
+                <Text style={styles.menuEmoji}>🏢</Text>
+              </View>
+              <Text style={styles.menuItemText}>Register an Organization</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut} activeOpacity={0.7}>
+          <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Text style={styles.signOutText}>Sign Out</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -94,49 +121,72 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 72 : 52,
+    paddingBottom: Spacing.xxxl,
+  },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: Spacing.xxl,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary,
+    width: 88,
+    height: 88,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
+    ...Shadows.glow,
   },
   avatarText: {
-    fontSize: Typography.fontSize.xxl,
+    fontSize: Typography.fontSize.xxxl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.white,
   },
   name: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
+    color: Colors.textOnDark,
+    letterSpacing: -0.3,
   },
   email: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
+    color: Colors.textOnDarkMuted,
+    marginTop: Spacing.xxs,
+  },
+  schoolBadge: {
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xs + 2,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  schoolText: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textOnDarkMuted,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: Spacing.xl,
+    marginTop: -Spacing.lg,
   },
   section: {
     marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    fontSize: Typography.fontSize.md,
+    fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: Spacing.md,
   },
   chipRow: {
@@ -145,35 +195,70 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
-    backgroundColor: `${Colors.primaryLight}20`,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.xs + 2,
+  },
+  chipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   chipText: {
     fontSize: Typography.fontSize.xs,
-    color: Colors.primary,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     textTransform: 'capitalize',
   },
   menuItem: {
-    paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white,
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    ...Shadows.sm,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuEmoji: {
+    fontSize: 18,
   },
   menuItemText: {
     fontSize: Typography.fontSize.md,
     color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  menuArrow: {
+    fontSize: 24,
+    color: Colors.textMuted,
+    fontWeight: Typography.fontWeight.medium,
   },
   signOutButton: {
     marginTop: 'auto',
-    marginBottom: Spacing.xxl,
+    marginBottom: Spacing.xxxl + 32,
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+    backgroundColor: Colors.errorMuted,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.15)',
   },
   signOutText: {
     fontSize: Typography.fontSize.md,
     color: Colors.error,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

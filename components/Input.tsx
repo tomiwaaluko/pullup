@@ -1,36 +1,63 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TextInputProps, StyleSheet } from 'react-native';
-import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TextInputProps, StyleSheet, Animated } from 'react-native';
+import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
 }
 
-export default function Input({ label, error, style, onFocus, onBlur, ...props }: InputProps) {
+export default function Input({ label, error, style, value, onFocus, onBlur, ...props }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const borderAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(borderAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
+
+  const borderColor = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.borderLight, Colors.primary],
+  });
+
+  const bgColor = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [Colors.surfaceSecondary, Colors.white],
+  });
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <TextInput
+      {label && (
+        <Text style={[styles.label, isFocused && styles.labelFocused]}>
+          {label}
+        </Text>
+      )}
+      <Animated.View
         style={[
-          styles.input,
-          isFocused && styles.inputFocused,
+          styles.inputWrap,
+          { borderColor, backgroundColor: bgColor },
           error && styles.inputError,
-          style
         ]}
-        placeholderTextColor={Colors.textMuted}
-        onFocus={(e) => {
-          setIsFocused(true);
-          onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          setIsFocused(false);
-          onBlur?.(e);
-        }}
-        {...props}
-      />
+      >
+        <TextInput
+          style={[styles.input, style]}
+          placeholderTextColor={Colors.textMuted}
+          onFocus={(e) => {
+            setIsFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            onBlur?.(e);
+          }}
+          value={value}
+          {...props}
+        />
+      </Animated.View>
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
@@ -38,34 +65,37 @@ export default function Input({ label, error, style, onFocus, onBlur, ...props }
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   label: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.textSecondary,
     marginLeft: Spacing.xs,
+    letterSpacing: 0.2,
+  },
+  labelFocused: {
+    color: Colors.primary,
+  },
+  inputWrap: {
+    borderWidth: 1.5,
+    borderRadius: Radius.lg,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.surfaceSecondary,
   },
   input: {
-    borderWidth: 2,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
+    paddingVertical: Spacing.md + 2,
+    paddingHorizontal: Spacing.lg,
     fontSize: Typography.fontSize.md,
     color: Colors.text,
-    backgroundColor: Colors.surface,
-    minHeight: 56,
-  },
-  inputFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.white,
-    ...Shadows.sm,
+    minHeight: 52,
   },
   inputError: {
     borderColor: Colors.error,
+    backgroundColor: Colors.errorMuted,
   },
   error: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.xs,
     color: Colors.error,
     marginLeft: Spacing.xs,
     fontWeight: Typography.fontWeight.medium,

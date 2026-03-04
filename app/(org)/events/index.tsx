@@ -6,19 +6,18 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCurrentOrg } from '@/lib/org-context';
 import { useOrgEvents, useCreateEvent, useDeleteEvent } from '@/hooks/useOrganizations';
 import { Event } from '@/lib/types';
-import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import Button from '@/components/Button';
+import { Colors, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
 }
 
@@ -31,13 +30,11 @@ function OrgEventCard({ event }: { event: Event }) {
     Alert.alert('Delete Event', `Are you sure you want to delete "${event.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () =>
-          deleteEvent.mutate(
-            { id: event.id, orgId: event.org_id },
-            { onError: () => Alert.alert('Error', 'Failed to delete event.') },
-          ),
+        text: 'Delete', style: 'destructive',
+        onPress: () => deleteEvent.mutate(
+          { id: event.id, orgId: event.org_id },
+          { onError: () => Alert.alert('Error', 'Failed to delete event.') },
+        ),
       },
     ]);
   };
@@ -61,18 +58,31 @@ function OrgEventCard({ event }: { event: Event }) {
     }
   };
 
+  const typeColor = EventTypeColors[event.type] || EventTypeColors.other;
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <View
-          style={[
-            styles.statusBadge,
-            event.status === 'published' ? styles.publishedBadge : styles.draftBadge,
-          ]}
-        >
-          <Text style={styles.statusText}>{event.status}</Text>
+        <View style={[
+          styles.statusBadge,
+          event.status === 'published'
+            ? { backgroundColor: Colors.successMuted }
+            : { backgroundColor: Colors.accentMuted },
+        ]}>
+          <View style={[
+            styles.statusDot,
+            { backgroundColor: event.status === 'published' ? Colors.success : Colors.accent },
+          ]} />
+          <Text style={[
+            styles.statusText,
+            { color: event.status === 'published' ? Colors.success : Colors.accent },
+          ]}>
+            {event.status}
+          </Text>
         </View>
-        <Text style={styles.cardType}>{event.type}</Text>
+        <View style={[styles.typeBadge, { backgroundColor: typeColor.bg }]}>
+          <Text style={[styles.typeText, { color: typeColor.text }]}>{event.type}</Text>
+        </View>
       </View>
 
       <Text style={styles.cardTitle}>{event.title}</Text>
@@ -80,16 +90,13 @@ function OrgEventCard({ event }: { event: Event }) {
       <Text style={styles.cardLocation} numberOfLines={1}>{event.location}</Text>
 
       <View style={styles.cardActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push(`/events/${event.id}`)}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push(`/events/${event.id}`)} activeOpacity={0.7}>
           <Text style={styles.actionText}>Preview</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={handleDuplicate}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleDuplicate} activeOpacity={0.7}>
           <Text style={styles.actionText}>Duplicate</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={handleDelete}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleDelete} activeOpacity={0.7}>
           <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -112,12 +119,13 @@ export default function OrgEvents() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.createButton}
-        onPress={() => router.push('/(org)/events/new')}
-      >
-        <Text style={styles.createButtonText}>+ Create Event</Text>
-      </TouchableOpacity>
+      <View style={styles.topBar}>
+        <Button
+          title="+ Create Event"
+          onPress={() => router.push('/(org)/events/new')}
+          size="md"
+        />
+      </View>
 
       {events && events.length > 0 ? (
         <FlatList
@@ -128,6 +136,7 @@ export default function OrgEvents() {
         />
       ) : (
         <View style={styles.center}>
+          <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyText}>No events yet</Text>
           <Text style={styles.emptySubtext}>Create your first event to get started!</Text>
         </View>
@@ -140,69 +149,68 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+  },
+  topBar: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
+    paddingBottom: Spacing.md,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  createButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.sm,
-    padding: Spacing.md,
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  createButtonText: {
-    color: Colors.white,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
-  },
   list: {
+    paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xxl,
   },
   card: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...Shadows.sm,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 2,
+    paddingVertical: Spacing.xs,
   },
-  publishedBadge: {
-    backgroundColor: `${Colors.success}20`,
-  },
-  draftBadge: {
-    backgroundColor: `${Colors.warning}20`,
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   statusText: {
     fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     textTransform: 'capitalize',
   },
-  cardType: {
+  typeBadge: {
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  typeText: {
     fontSize: Typography.fontSize.xs,
-    color: Colors.textMuted,
+    fontWeight: Typography.fontWeight.semibold,
     textTransform: 'capitalize',
   },
   cardTitle: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
+    fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     marginBottom: Spacing.xs,
+    letterSpacing: -0.2,
   },
   cardDate: {
     fontSize: Typography.fontSize.sm,
@@ -215,31 +223,35 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
     paddingTop: Spacing.md,
   },
   actionButton: {
     paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
   },
   actionText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
   deleteText: {
     color: Colors.error,
   },
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: Spacing.md,
+  },
   emptyText: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
   },
   emptySubtext: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textMuted,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
 });
