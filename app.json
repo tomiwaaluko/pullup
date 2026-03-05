@@ -38,7 +38,8 @@
           "project": "react-native",
           "organization": "tomiwa-k6"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
