@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { queryClient } from './query-client';
 
 const DEV_USER: User = {
   id: 'dev-user-00000000-0000-0000-0000-000000000000',
@@ -97,12 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (isDevMode) {
-      setIsDevMode(false);
-      setSession(null);
-      return;
+    setSession(null);
+    setIsDevMode(false);
+    queryClient.clear();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn('Sign out error:', error);
     }
-    await supabase.auth.signOut();
   };
 
   const devSignIn = () => {

@@ -1,13 +1,19 @@
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Typography, Spacing } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, FredokaOne_400Regular } from '@expo-google-fonts/fredoka-one';
 import { Video, ResizeMode } from 'expo-av';
 
+const TERMS_URL = 'https://pullup.app/terms';
+const PRIVACY_URL = 'https://pullup.app/privacy';
+const SERVICE_URL = 'https://pullup.app/supplemental-terms';
+
 export default function Welcome() {
   const router = useRouter();
-  
+  const [videoError, setVideoError] = useState(false);
+
   let [fontsLoaded] = useFonts({
     FredokaOne_400Regular,
   });
@@ -24,14 +30,20 @@ export default function Welcome() {
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      <Video
-        source={require('@/assets/media/appgradient.mp4')}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
-      />
+      {!videoError && (
+        <Video
+          source={require('@/assets/media/appgradient.mp4')}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay
+          isLooping
+          isMuted
+          onError={(error) => {
+            console.warn('Video failed to load:', error);
+            setVideoError(true);
+          }}
+        />
+      )}
 
       <View style={styles.content}>
         <View style={styles.header}>
@@ -44,9 +56,9 @@ export default function Welcome() {
         <View style={styles.footer}>
           <Text style={styles.termsText}>
             By tapping the button, you agree to the PullUp{' '}
-            <Text style={styles.linkText}>Terms</Text> and{' '}
-            <Text style={styles.linkText}>Privacy Policy</Text> and supplemental{' '}
-            <Text style={styles.linkText}>Terms of Service</Text>.
+            <Text style={styles.linkText} accessibilityRole="link" onPress={() => Linking.openURL(TERMS_URL)}>Terms</Text> and{' '}
+            <Text style={styles.linkText} accessibilityRole="link" onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text> and supplemental{' '}
+            <Text style={styles.linkText} accessibilityRole="link" onPress={() => Linking.openURL(SERVICE_URL)}>Terms of Service</Text>.
           </Text>
 
           <TouchableOpacity

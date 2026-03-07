@@ -26,6 +26,12 @@ export default function ProfileScreen() {
   });
 
   const handleSignOut = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out?')) {
+        signOut();
+      }
+      return;
+    }
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: signOut },
