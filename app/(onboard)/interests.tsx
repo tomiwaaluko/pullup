@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { EventType } from '@/lib/types';
-import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
 import Button from '@/components/Button';
 
 const INTEREST_OPTIONS: { label: string; value: EventType; icon: string }[] = [
@@ -18,7 +18,19 @@ const INTEREST_OPTIONS: { label: string; value: EventType; icon: string }[] = [
   { label: 'Other', value: 'other', icon: '✨' },
 ];
 
-function InterestTile({ option, selected, onPress }: any) {
+interface InterestOption {
+  label: string;
+  value: EventType;
+  icon: string;
+}
+
+interface InterestTileProps {
+  option: InterestOption;
+  selected: boolean;
+  onPress: () => void;
+}
+
+function InterestTile({ option, selected, onPress }: InterestTileProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const typeColor = EventTypeColors[option.value] || EventTypeColors.other;
 
@@ -35,7 +47,7 @@ function InterestTile({ option, selected, onPress }: any) {
         styles.tile,
         selected
           ? { backgroundColor: typeColor.bg, borderColor: `${typeColor.dot}30` }
-          : { borderColor: Colors.border, backgroundColor: Colors.white },
+          : { borderColor: Colors.borderDark, backgroundColor: Colors.charcoal },
         { transform: [{ scale }] },
       ]}>
         <Text style={styles.tileIcon}>{option.icon}</Text>
@@ -45,9 +57,11 @@ function InterestTile({ option, selected, onPress }: any) {
         ]}>
           {option.label}
         </Text>
-        {selected && <View style={[styles.checkBadge, { backgroundColor: typeColor.dot }]}>
-          <Text style={styles.checkMark}>✓</Text>
-        </View>}
+        {selected && (
+          <View style={[styles.checkBadge, { backgroundColor: typeColor.dot }]}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
+        )}
       </Animated.View>
     </Pressable>
   );
@@ -85,14 +99,18 @@ export default function Interests() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.ink, Colors.charcoal, Colors.background]}
+        colors={[Colors.ink, Colors.charcoal]}
         style={styles.headerGradient}
       >
         <Text style={styles.title}>What are you into?</Text>
         <Text style={styles.subtitle}>Select your interests to personalize your feed.</Text>
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+      >
         <View style={styles.grid}>
           {INTEREST_OPTIONS.map((option) => (
             <InterestTile
@@ -111,9 +129,9 @@ export default function Interests() {
 
       <View style={styles.bottom}>
         <Button
-          title={selected.length > 0 ? "Continue" : "Skip for now"}
+          title={selected.length > 0 ? 'Continue' : 'Skip for now'}
           onPress={handleContinue}
-          variant={selected.length > 0 ? "primary" : "secondary"}
+          variant={selected.length > 0 ? 'primary' : 'secondary'}
         />
       </View>
     </View>
@@ -123,7 +141,7 @@ export default function Interests() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
   },
   headerGradient: {
     paddingTop: Platform.OS === 'ios' ? 72 : 52,
@@ -141,6 +159,9 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.md,
     color: Colors.textOnDarkMuted,
     lineHeight: 24,
+  },
+  scrollView: {
+    backgroundColor: Colors.ink,
   },
   content: {
     paddingHorizontal: Spacing.xl,
@@ -171,7 +192,7 @@ const styles = StyleSheet.create({
   tileText: {
     fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.medium,
-    color: Colors.textSecondary,
+    color: Colors.textOnDarkMuted,
     textAlign: 'center',
   },
   checkBadge: {
@@ -192,15 +213,15 @@ const styles = StyleSheet.create({
   selectedCount: {
     textAlign: 'center',
     fontSize: Typography.fontSize.sm,
-    color: Colors.primary,
+    color: Colors.primaryLight,
     fontWeight: Typography.fontWeight.semibold,
     marginTop: Spacing.xl,
   },
   bottom: {
     padding: Spacing.xl,
     paddingBottom: Spacing.xxxl,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.ink,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: Colors.borderDark,
   },
 });

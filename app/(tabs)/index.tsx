@@ -10,6 +10,7 @@ import {
   ScrollView,
   Animated,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEvents } from '@/hooks/useEvents';
@@ -24,6 +25,9 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<EventType | undefined>();
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'all'>('all');
+
+  const firstName = user?.user_metadata?.first_name as string | undefined;
+  const greetingText = firstName ? `Hey, ${firstName}! 👋` : 'Hey there 👋';
 
   const { data, isLoading, isError, isRefetching, refetch, fetchNextPage, hasNextPage } = useEvents({
     search: search || undefined,
@@ -47,7 +51,7 @@ export default function Home() {
       >
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.greeting}>Hey there 👋</Text>
+            <Text style={styles.greeting}>{greetingText}</Text>
             <Text style={styles.headerSubtitle}>Discover what's happening</Text>
           </View>
         </View>
@@ -62,6 +66,11 @@ export default function Home() {
               value={search}
               onChangeText={setSearch}
             />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <Text style={styles.clearButton}>✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </LinearGradient>
@@ -94,41 +103,50 @@ export default function Home() {
     </View>
   );
 
-  return (
-    <View style={styles.container}>
-      {isLoading ? (
+  const renderEmpty = () => {
+    if (isLoading) {
+      return (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      ) : isError ? (
+      );
+    }
+    if (isError) {
+      return (
         <View style={styles.center}>
           <Text style={styles.emptyText}>Something went wrong</Text>
           <Text style={styles.emptySubtext}>Pull down to try again.</Text>
         </View>
-      ) : events.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>No events found</Text>
-          <Text style={styles.emptySubtext}>Check back later for new events!</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={search || typeFilter !== undefined || timeFilter !== 'all' ? events : regularEvents}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => <EventCard event={item} />}
-          contentContainerStyle={styles.list}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={Colors.primary}
-            />
-          }
-        />
-      )}
+      );
+    }
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyText}>No events found</Text>
+        <Text style={styles.emptySubtext}>Check back later for new events!</Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={isLoading ? [] : (search || typeFilter !== undefined || timeFilter !== 'all' ? events : regularEvents)}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        renderItem={({ item }) => <EventCard event={item} />}
+        contentContainerStyle={styles.list}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={Colors.primary}
+          />
+        }
+      />
     </View>
   );
 }
@@ -189,6 +207,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.md,
     color: Colors.textOnDark,
   },
+  clearButton: {
+    color: Colors.textOnDarkMuted,
+    fontSize: 16,
+    paddingHorizontal: Spacing.sm,
+  },
   filtersWrap: {
     paddingHorizontal: Spacing.lg,
     marginTop: -Spacing.sm,
@@ -227,6 +250,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: Spacing.xxl,
   },
   emptyText: {
     fontSize: Typography.fontSize.xl,

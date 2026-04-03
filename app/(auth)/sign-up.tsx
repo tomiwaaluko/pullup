@@ -10,14 +10,15 @@ import {
   Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
-import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
+import { Colors, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 
 export default function SignUp() {
   const { signUp } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
 
   const [firstName, setFirstName] = useState('');
@@ -80,8 +81,13 @@ export default function SignUp() {
         graduation_year: year,
         major: major.trim() || undefined,
       });
-      if (error) { setFormError(error.message); }
-      else if (needsConfirmation) { setSuccessMessage('Account created! Check your email for a confirmation link.'); }
+      if (error) {
+        setFormError(error.message);
+      } else if (needsConfirmation) {
+        // Email confirmation required — go to login so the user knows to check email first
+        router.replace('/(auth)/login');
+      }
+      // else: session created immediately — onAuthStateChange fires and _layout.tsx handles navigation
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
       setFormError(message);
@@ -93,7 +99,7 @@ export default function SignUp() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[...Gradients.warmSunset]}
+        colors={[Colors.ink, Colors.charcoal]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.heroGradient}
@@ -174,7 +180,7 @@ export default function SignUp() {
             {step === 1 && (
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Already have an account? </Text>
-                <Link href="/(auth)/sign-in" asChild>
+                <Link href="/(auth)/login" asChild>
                   <Text style={styles.link}>Sign In</Text>
                 </Link>
               </View>

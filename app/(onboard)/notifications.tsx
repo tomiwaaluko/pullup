@@ -22,22 +22,22 @@ export default function Notifications() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.ink, Colors.charcoal]}
-        style={styles.topGradient}
-      >
+      <View style={styles.graphicSection}>
         <View style={styles.graphicWrap}>
+          <View style={styles.glowBlob} />
           <LinearGradient
             colors={[...Gradients.warmSunset]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.graphicCircle}
           >
             <Text style={styles.graphicText}>🔔</Text>
           </LinearGradient>
           <View style={styles.glowRing} />
         </View>
-      </LinearGradient>
+      </View>
 
-      <View style={styles.content}>
+      <View style={styles.textSection}>
         <Text style={styles.title}>Stay in the loop</Text>
         <Text style={styles.description}>
           Enable notifications so you never miss an event you RSVP'd to. We promise not to spam you!
@@ -45,7 +45,7 @@ export default function Notifications() {
       </View>
 
       <View style={styles.bottom}>
-        <Button title="Enable Notifications" onPress={handleEnable} />
+        <Button title="Enable Notifications" variant="primary" onPress={handleEnable} />
         <Button title="Maybe Later" variant="ghost" onPress={handleSkip} style={styles.secondaryBtn} />
       </View>
     </View>
@@ -55,60 +55,67 @@ export default function Notifications() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  topGradient: {
+    backgroundColor: Colors.ink,
     paddingTop: Platform.OS === 'ios' ? 100 : 80,
-    paddingBottom: 60,
+  },
+  graphicSection: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   graphicWrap: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  glowBlob: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(249, 115, 22, 0.06)',
+  },
   graphicCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 40,
+    width: 140,
+    height: 140,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.glowPink,
   },
   glowRing: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     borderWidth: 2,
-    borderColor: 'rgba(249, 115, 22, 0.15)',
+    borderColor: 'rgba(249, 115, 22, 0.2)',
   },
   graphicText: {
-    fontSize: 56,
+    fontSize: 64,
   },
-  content: {
-    flex: 1,
+  textSection: {
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
-    marginTop: -Spacing.xxl,
+    marginTop: Spacing.xxl,
   },
   title: {
     fontSize: Typography.fontSize.xxxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
+    color: Colors.textOnDark,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
     letterSpacing: -0.5,
+    marginBottom: Spacing.md,
   },
   description: {
     fontSize: Typography.fontSize.lg,
-    color: Colors.textMuted,
+    color: Colors.textOnDarkMuted,
     textAlign: 'center',
     lineHeight: 28,
   },
   bottom: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: Platform.OS === 'ios' ? 52 : 32,
+    paddingTop: Spacing.xl,
     gap: Spacing.sm,
   },
   secondaryBtn: {

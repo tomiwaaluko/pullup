@@ -8,9 +8,10 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
 import { Colors, Gradients, Typography, Spacing, Radius, Shadows } from '@/constants/theme';
 import Button from '@/components/Button';
@@ -18,6 +19,7 @@ import Input from '@/components/Input';
 
 export default function SignIn() {
   const { signIn, signInWithOAuth, devSignIn } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,62 @@ export default function SignIn() {
           bounces={false}
         >
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Welcome back</Text>
+            {/* Tab toggle row */}
+            <View style={styles.tabContainer}>
+              <View style={styles.tabTrack}>
+                <View style={styles.tabActive}>
+                  <Text style={styles.tabActiveText}>Sign In</Text>
+                </View>
+                <Pressable
+                  style={styles.tabInactive}
+                  onPress={() => router.push('/(auth)/sign-up')}
+                >
+                  <Text style={styles.tabInactiveText}>Sign Up</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Social auth buttons */}
+            <View style={styles.socialGroup}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  pressed && styles.socialButtonPressed,
+                ]}
+                onPress={() => handleOAuthSignIn('google')}
+                disabled={loading}
+              >
+                <View style={styles.socialIconCircle}>
+                  <Text style={styles.googleIconText}>G</Text>
+                </View>
+                <Text style={styles.socialButtonText}>Continue with Google</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.socialButton,
+                  pressed && styles.socialButtonPressed,
+                ]}
+                onPress={() => handleOAuthSignIn('apple')}
+                disabled={loading}
+              >
+                <View style={[styles.socialIconCircle, styles.appleIconCircle]}>
+                  <Text style={styles.appleIconText}>
+                    {'\uF8FF'}
+                  </Text>
+                </View>
+                <Text style={styles.socialButtonText}>Continue with Apple</Text>
+              </Pressable>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Email + Password form */}
             <View style={styles.form}>
               <Input
                 label="Email"
@@ -113,23 +170,6 @@ export default function SignIn() {
                 loading={loading}
                 style={styles.button}
               />
-              <Button
-                title="Continue with Google"
-                onPress={() => handleOAuthSignIn('google')}
-                variant="secondary"
-              />
-              <Button
-                title="Continue with Apple"
-                onPress={() => handleOAuthSignIn('apple')}
-                variant="secondary"
-              />
-            </View>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <Link href="/(auth)/sign-up" asChild>
-                <Text style={styles.link}>Sign Up</Text>
-              </Link>
             </View>
 
             {__DEV__ && (
@@ -200,39 +240,123 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.xxl,
     borderTopRightRadius: Radius.xxl,
     padding: Spacing.xl,
-    paddingTop: Spacing.xxl,
+    paddingTop: Spacing.xl,
     ...Shadows.lg,
   },
-  cardTitle: {
-    fontSize: Typography.fontSize.xxl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
+
+  // Tab toggle
+  tabContainer: {
     marginBottom: Spacing.xl,
-    letterSpacing: -0.3,
   },
+  tabTrack: {
+    flexDirection: 'row',
+    backgroundColor: Colors.borderLight,
+    borderRadius: Radius.full,
+    padding: 4,
+  },
+  tabActive: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.glow,
+  },
+  tabActiveText: {
+    color: Colors.white,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+  },
+  tabInactive: {
+    flex: 1,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabInactiveText: {
+    color: Colors.textMuted,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+  },
+
+  // Social auth
+  socialGroup: {
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+  },
+  socialButtonPressed: {
+    backgroundColor: Colors.borderLight,
+  },
+  socialIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  appleIconCircle: {
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
+  },
+  googleIconText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.info,
+  },
+  appleIconText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.white,
+  },
+  socialButtonText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: Typography.fontSize.md,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text,
+    marginRight: 28 + Spacing.md, // balance the icon on the left so text appears centered
+  },
+
+  // Divider
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textMuted,
+    fontWeight: Typography.fontWeight.medium,
+  },
+
+  // Email form
   form: {
     gap: Spacing.lg,
   },
   button: {
     marginTop: Spacing.sm,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: Spacing.xxl,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  footerText: {
-    color: Colors.textMuted,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  link: {
-    color: Colors.primary,
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
   },
   devButton: {
     marginTop: Spacing.lg,
