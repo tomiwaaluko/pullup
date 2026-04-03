@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Event } from '@/lib/types';
 import { addToGoogleCalendar, addToOutlookCalendar } from '@/lib/calendar';
 import { Colors, Typography, Spacing, Radius } from '@/constants/theme';
+import { track } from '@/lib/analytics';
 
 interface AddToCalendarProps {
   event: Event;
@@ -23,6 +24,7 @@ export default function AddToCalendar({ event }: AddToCalendarProps) {
       } else {
         await addToOutlookCalendar(calendarEvent);
       }
+      track('add_to_calendar', { provider, event_id: event.id });
     } catch {
       Alert.alert('Error', 'Could not open calendar.');
     }

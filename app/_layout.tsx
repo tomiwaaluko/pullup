@@ -1,28 +1,42 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Href, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Sentry from '@sentry/react-native';
 import HeaderBackButton from '@/components/HeaderBackButton';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query-client';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { Colors } from '@/constants/theme';
+import { resolveAuthRedirect } from '@/lib/navigation';
+
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN ?? process.env.SENTRY_DSN;
+if (!sentryDsn) {
+  console.warn('Sentry DSN not configured — error reporting disabled');
+}
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: !__DEV__ && !!sentryDsn,
+  tracesSampleRate: 0.2,
+});
 
 function RootLayoutNav() {
-  const { session, loading } = useAuth();
+  const { session, loading, onboardingComplete, onboardingLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    const nextPath = resolveAuthRedirect({
+      session: !!session,
+      loading,
+      onboardingComplete,
+      onboardingLoading,
+      segment: segments[0],
+    });
 
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!session && !inAuthGroup) {
-      router.replace('/(auth)');
-    } else if (session && inAuthGroup) {
-      router.replace('/(tabs)');
+    if (nextPath) {
+      router.replace(nextPath as Href);
     }
-  }, [session, loading, segments]);
+  }, [session, loading, onboardingComplete, onboardingLoading, segments]);
 
   return (
     <>
@@ -54,7 +68,7 @@ function RootLayoutNav() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -63,3 +77,5 @@ export default function RootLayout() {
     </QueryClientProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

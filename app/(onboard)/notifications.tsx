@@ -1,18 +1,22 @@
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/lib/auth-context';
 import { Colors, Gradients, Typography, Spacing, Shadows } from '@/constants/theme';
 import Button from '@/components/Button';
 
 export default function Notifications() {
   const router = useRouter();
+  const { completeOnboarding } = useAuth();
 
   const handleEnable = async () => {
     // Phase 2: Request Expo push notification permissions here
+    await completeOnboarding();
     router.replace('/(tabs)');
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await completeOnboarding();
     router.replace('/(tabs)');
   };
 

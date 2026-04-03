@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Event } from '@/lib/types';
+import { track } from '@/lib/analytics';
 
 export function useRSVPs() {
   const { user } = useAuth();
@@ -64,6 +65,7 @@ export function useToggleRSVP() {
       }
     },
     onSuccess: (_, { eventId }) => {
+      track('rsvp', { event_id: eventId });
       queryClient.invalidateQueries({ queryKey: ['rsvp', user?.id, eventId] });
       queryClient.invalidateQueries({ queryKey: ['rsvps', user?.id] });
     },

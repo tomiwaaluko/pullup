@@ -26,6 +26,12 @@ export default function OrgEventsLayout() {
           title: 'Create Event',
         }}
       />
+      <Stack.Screen
+        name="[id]/attendees"
+        options={{
+          title: 'Attendees',
+        }}
+      />
     </Stack>
   );
 }

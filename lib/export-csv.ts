@@ -1,10 +1,10 @@
-import { Share, Platform } from 'react-native';
-import * as Linking from 'expo-linking';
+import { Share } from 'react-native';
+import { track } from './analytics';
 
-interface RSVPRow {
+export interface RSVPRow {
   profile?: {
-    name: string | null;
-    email: string;
+    name?: string | null;
+    email?: string | null;
   };
   created_at: string;
 }
@@ -34,4 +34,5 @@ export async function shareCSV(rsvps: RSVPRow[], eventTitle: string): Promise<vo
     message: csv,
     title: `RSVPs - ${eventTitle}`,
   });
+  track('rsvp_export', { attendee_count: rsvps.length, event_title: eventTitle });
 }

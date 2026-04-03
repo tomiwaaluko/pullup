@@ -2,6 +2,7 @@ type AnalyticsEvent =
   // Member events
   | 'sign_up'
   | 'sign_in'
+  | 'sign_out'
   | 'event_view'
   | 'rsvp'
   | 'event_share'
@@ -19,8 +20,16 @@ interface AnalyticsProperties {
   [key: string]: string | number | boolean | undefined;
 }
 
+import * as Sentry from '@sentry/react-native';
+
 export function track(event: AnalyticsEvent, properties?: AnalyticsProperties): void {
-  // TODO: Replace with PostHog, Mixpanel, or Supabase Analytics
+  Sentry.addBreadcrumb({
+    category: 'analytics',
+    message: event,
+    level: 'info',
+    data: properties,
+  });
+
   if (__DEV__) {
     console.log(`[Analytics] ${event}`, properties ?? '');
   }

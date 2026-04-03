@@ -17,7 +17,7 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 
 export default function SignIn() {
-  const { signIn, devSignIn } = useAuth();
+  const { signIn, signInWithOAuth, devSignIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,21 @@ export default function SignIn() {
     setLoading(true);
     try {
       const { error } = await signIn(email, password);
+      if (error) {
+        Alert.alert('Sign In Error', error.message);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      Alert.alert('Sign In Error', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
+    setLoading(true);
+    try {
+      const { error } = await signInWithOAuth(provider);
       if (error) {
         Alert.alert('Sign In Error', error.message);
       }
@@ -97,6 +112,16 @@ export default function SignIn() {
                 onPress={handleSignIn}
                 loading={loading}
                 style={styles.button}
+              />
+              <Button
+                title="Continue with Google"
+                onPress={() => handleOAuthSignIn('google')}
+                variant="secondary"
+              />
+              <Button
+                title="Continue with Apple"
+                onPress={() => handleOAuthSignIn('apple')}
+                variant="secondary"
               />
             </View>
 

@@ -93,6 +93,9 @@ function OrgEventCard({ event }: { event: Event }) {
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push(`/events/${event.id}`)} activeOpacity={0.7}>
           <Text style={styles.actionText}>Preview</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push(`/(org)/events/${event.id}/attendees`)} activeOpacity={0.7}>
+          <Text style={styles.actionText}>Attendees</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={handleDuplicate} activeOpacity={0.7}>
           <Text style={styles.actionText}>Duplicate</Text>
         </TouchableOpacity>

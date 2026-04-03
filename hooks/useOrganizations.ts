@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Organization, Event } from '@/lib/types';
+import { track } from '@/lib/analytics';
 
 export function useMyOrganizations() {
   const { user } = useAuth();
@@ -72,6 +73,7 @@ export function useCreateOrganization() {
       return data as Organization;
     },
     onSuccess: () => {
+      track('org_register', { source: 'app' });
       queryClient.invalidateQueries({ queryKey: ['myOrganizations'] });
     },
   });
@@ -143,6 +145,10 @@ export function useCreateEvent() {
       return data as Event;
     },
     onSuccess: (data) => {
+      track('event_create', { event_id: data.id, status: data.status });
+      if (data.status === 'published') {
+        track('event_publish', { event_id: data.id });
+      }
       queryClient.invalidateQueries({ queryKey: ['orgEvents', data.org_id] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
     },
@@ -165,6 +171,10 @@ export function useUpdateEvent() {
       return data as Event;
     },
     onSuccess: (data) => {
+      track('event_edit', { event_id: data.id, status: data.status });
+      if (data.status === 'published') {
+        track('event_publish', { event_id: data.id, source: 'edit' });
+      }
       queryClient.invalidateQueries({ queryKey: ['event', data.id] });
       queryClient.invalidateQueries({ queryKey: ['orgEvents', data.org_id] });
       queryClient.invalidateQueries({ queryKey: ['events'] });

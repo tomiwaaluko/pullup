@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEvent } from '@/hooks/useEvents';
@@ -19,6 +20,7 @@ import { useIsFollowingOrg, useToggleOrgFollow } from '@/hooks/useOrgFollows';
 import AddToCalendar from '@/components/AddToCalendar';
 import Button from '@/components/Button';
 import { Colors, Gradients, Typography, Spacing, Radius, Shadows, EventTypeColors } from '@/constants/theme';
+import { track } from '@/lib/analytics';
 
 function formatDateTime(dateStr: string): string {
   const d = new Date(dateStr);
@@ -38,6 +40,12 @@ export default function EventDetail() {
   const toggleRSVP = useToggleRSVP();
   const toggleSave = useToggleSavedEvent();
   const toggleFollow = useToggleOrgFollow();
+
+  useEffect(() => {
+    if (event?.id) {
+      track('event_view', { event_id: event.id, org_id: event.org_id });
+    }
+  }, [event?.id]);
 
   if (isLoading) {
     return (
@@ -64,7 +72,10 @@ export default function EventDetail() {
   };
 
   const handleShare = async () => {
-    try { await Share.share({ message: `Check out "${event.title}" on PullUp!` }); } catch {}
+    try {
+      await Share.share({ message: `Check out "${event.title}" on PullUp!` });
+      track('event_share', { event_id: event.id });
+    } catch {}
   };
 
   const handleOpenMap = async () => {

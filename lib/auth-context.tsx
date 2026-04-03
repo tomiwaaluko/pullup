@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { queryClient } from './query-client';
+import { track } from './analytics';
 
 const DEV_USER: User = {
   id: 'dev-user-00000000-0000-0000-0000-000000000000',
@@ -33,10 +34,14 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  onboardingComplete: boolean;
+  onboardingLoading: boolean;
   isDevMode: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithOAuth: (provider: 'google' | 'apple') => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
   devSignIn: () => void;
 }
 
@@ -45,6 +50,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [onboardingLoading, setOnboardingLoading] = useState(true);
   const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
@@ -66,8 +73,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [isDevMode]);
 
+  useEffect(() => {
+    async function loadOnboardingStatus() {
+      if (!session?.user?.id) {
+        setOnboardingComplete(false);
+        setOnboardingLoading(false);
+        return;
+      }
+
+      setOnboardingLoading(true);
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('preferences')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        const preferences = (data?.preferences as Record<string, unknown> | null) ?? {};
+        setOnboardingComplete(preferences.onboarding_completed === true);
+      } catch {
+        setOnboardingComplete(false);
+      } finally {
+        setOnboardingLoading(false);
+      }
+    }
+
+    loadOnboardingStatus();
+  }, [session?.user?.id]);
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      track('sign_in', { method: 'password' });
+    }
     return { error: error as Error | null };
   };
 
@@ -94,11 +131,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: new Error('An account with this email already exists.'), needsConfirmation: false };
     }
     const needsConfirmation = !data.session;
+    track('sign_up', { method: 'password', needs_confirmation: needsConfirmation });
     return { error: null, needsConfirmation };
   };
 
+  const signInWithOAuth = async (provider: 'google' | 'apple') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: 'pullup://',
+      },
+    });
+    if (!error) {
+      track('sign_in', { method: provider });
+    }
+    return { error: error as Error | null };
+  };
+
   const signOut = async () => {
+    track('sign_out');
     setSession(null);
+    setOnboardingComplete(false);
+    setOnboardingLoading(false);
     setIsDevMode(false);
     queryClient.clear();
     try {
@@ -111,6 +165,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const devSignIn = () => {
     setIsDevMode(true);
     setSession(DEV_SESSION);
+    setOnboardingComplete(true);
+    setOnboardingLoading(false);
+  };
+
+  const completeOnboarding = async () => {
+    if (!session?.user?.id) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('preferences')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    const existing = (profile?.preferences as Record<string, unknown>) ?? {};
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ preferences: { ...existing, onboarding_completed: true } })
+      .eq('id', session.user.id);
+
+    if (error) throw error;
+    setOnboardingComplete(true);
   };
 
   return (
@@ -119,10 +194,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         user: session?.user ?? null,
         loading,
+        onboardingComplete,
+        onboardingLoading,
         isDevMode,
         signIn,
+        signInWithOAuth,
         signUp,
         signOut,
+        completeOnboarding,
         devSignIn,
       }}
     >

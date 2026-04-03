@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { track } from '@/lib/analytics';
 
 export function useOrgFollows() {
   const { user } = useAuth();
@@ -63,6 +64,7 @@ export function useToggleOrgFollow() {
       }
     },
     onSuccess: (_, { orgId }) => {
+      track('org_follow', { org_id: orgId });
       queryClient.invalidateQueries({ queryKey: ['orgFollow', user?.id, orgId] });
       queryClient.invalidateQueries({ queryKey: ['orgFollows', user?.id] });
     },

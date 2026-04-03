@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { track } from '@/lib/analytics';
 
 export function useSavedEvents() {
   const { user } = useAuth();
@@ -63,6 +64,7 @@ export function useToggleSavedEvent() {
       }
     },
     onSuccess: (_, { eventId }) => {
+      track('saved_event', { event_id: eventId });
       queryClient.invalidateQueries({ queryKey: ['savedEvent', user?.id, eventId] });
       queryClient.invalidateQueries({ queryKey: ['savedEvents', user?.id] });
     },

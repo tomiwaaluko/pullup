@@ -1,4 +1,12 @@
-import { generateCSV } from '@/lib/export-csv';
+import { Share } from 'react-native';
+import { generateCSV, shareCSV } from '@/lib/export-csv';
+import { track } from '@/lib/analytics';
+
+jest.mock('@/lib/analytics', () => ({
+  track: jest.fn(),
+}));
+
+jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
 
 const mockRSVPs = [
   {
@@ -33,5 +41,17 @@ describe('generateCSV', () => {
     const csv = generateCSV(mockRSVPs);
     expect(csv).toContain('Alice Smith');
     expect(csv).toContain('alice@university.edu');
+  });
+});
+
+describe('shareCSV', () => {
+  it('shares csv content and tracks export event', async () => {
+    await shareCSV(mockRSVPs, 'Launch Party');
+
+    expect(Share.share).toHaveBeenCalled();
+    expect(track).toHaveBeenCalledWith('rsvp_export', {
+      attendee_count: 2,
+      event_title: 'Launch Party',
+    });
   });
 });
